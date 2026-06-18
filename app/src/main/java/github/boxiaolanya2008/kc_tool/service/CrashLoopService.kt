@@ -169,11 +169,12 @@ class CrashLoopService : Service() {
         val channel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.crash_loop_channel_name),
-            NotificationManager.IMPORTANCE_DEFAULT
+            NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = getString(R.string.crash_loop_channel_desc)
             enableLights(true)
             enableVibration(true)
+            vibrationPattern = longArrayOf(0, 100, 200, 100)
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }
         manager.createNotificationChannel(channel)
@@ -224,13 +225,21 @@ class CrashLoopService : Service() {
                         "${currentIntervalMs}ms"
             )
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setLargeIcon(android.graphics.BitmapFactory.decodeResource(resources, android.R.drawable.ic_dialog_alert))
             .setContentIntent(contentIntent)
             .addAction(android.R.drawable.ic_media_pause, getString(R.string.stop), stopPendingIntent)
             .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setPriority(if (isStealth) NotificationCompat.PRIORITY_MIN else NotificationCompat.PRIORITY_DEFAULT)
+            .setOnlyAlertOnce(false)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setVibrate(longArrayOf(0, 100, 200, 100))
+            .setPriority(if (isStealth) NotificationCompat.PRIORITY_MIN else NotificationCompat.PRIORITY_HIGH)
             .setVisibility(if (isStealth) NotificationCompat.VISIBILITY_SECRET else NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(
+                "${getString(R.string.target)}: $pkgText\n" +
+                        "${getString(R.string.crash_count)}: $crashCount\n" +
+                        "${getString(R.string.interval)}: ${currentIntervalMs}ms"
+            ))
             .build()
     }
 

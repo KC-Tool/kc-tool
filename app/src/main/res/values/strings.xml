@@ -58,6 +58,7 @@
     <string name="stopped">已停止</string>
     <string name="total_crashes">总崩溃次数</string>
     <string name="recent_logs">最近记录</string>
+    <string name="interval">间隔</string>
 
     <string name="nav_home">首页</string>
     <string name="nav_crash_loop">循环崩溃</string>
