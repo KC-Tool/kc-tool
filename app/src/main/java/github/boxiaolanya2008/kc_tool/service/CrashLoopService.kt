@@ -160,15 +160,7 @@ class CrashLoopService : Service() {
     }
 
     private fun execCommand(command: String): String {
-        val method = Shizuku::class.java.getDeclaredMethod(
-            "newProcess",
-            Array<String>::class.java,
-            Array<String>::class.java,
-            String::class.java
-        )
-        method.isAccessible = true
-        val process = method.invoke(null, arrayOf("sh", "-c", command), null, null)
-            as java.lang.Process
+        val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
 
         val output = process.inputStream.bufferedReader().readText()
         val error = process.errorStream.bufferedReader().readText()
