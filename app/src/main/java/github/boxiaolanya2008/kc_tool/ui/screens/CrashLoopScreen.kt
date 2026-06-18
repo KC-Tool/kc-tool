@@ -55,6 +55,7 @@ fun CrashLoopScreen(
     val milliseconds by vm.milliseconds.collectAsState()
     val isRunning by vm.isRunning.collectAsState()
     val stealthMode by settingsManager.stealthMode.collectAsState()
+    val noNotificationMode by settingsManager.noNotificationMode.collectAsState()
     var showAppPicker by remember { mutableStateOf(false) }
     var hasNotificationPermission by remember {
         mutableStateOf(checkNotificationPermission(context))
@@ -187,6 +188,8 @@ fun CrashLoopScreen(
                     }
                 }
 
+                DiagnosticCard()
+
                 if (isRunning || CrashLoopState.isRunning.collectAsState().value) {
                     CrashStatusCard()
                 }
@@ -194,21 +197,32 @@ fun CrashLoopScreen(
 
             Button(
                 onClick = {
-                    if (isRunning) {
-                        CrashLoopService.stop(context)
-                        vm.setRunning(false)
-                    } else {
-                        if (!hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                            return@Button
-                        }
-                        if (selectedApps.isNotEmpty()) {
-                            val totalMs = vm.getTotalMs()
-                            if (totalMs > 0) {
-                                CrashLoopService.startMultiple(context, selectedApps.map { it.packageName }, totalMs, stealth = stealthMode)
-                                vm.setRunning(true)
+                    try {
+                        if (isRunning) {
+                            if (noNotificationMode) {
+                                vm.stopNoNotificationLoop()
+                            } else {
+                                CrashLoopService.stop(context)
+                                vm.setRunning(false)
+                            }
+                        } else {
+                            if (!noNotificationMode && !hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                return@Button
+                            }
+                            if (selectedApps.isNotEmpty()) {
+                                var totalMs = vm.getTotalMs()
+                                if (totalMs <= 0) totalMs = 500L
+                                if (noNotificationMode) {
+                                    vm.startNoNotificationLoop(selectedApps.map { it.packageName }, totalMs)
+                                } else {
+                                    val ok = CrashLoopService.startMultiple(context, selectedApps.map { it.packageName }, totalMs, stealth = stealthMode)
+                                    if (ok) vm.setRunning(true)
+                                }
                             }
                         }
+                    } catch (e: Exception) {
+                        CrashLoopState.diag("Button click crashed: ${e.javaClass.simpleName} ${e.message}")
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -288,6 +302,7 @@ private fun CrashStatusCard() {
     val serviceRunning by CrashLoopState.isRunning.collectAsState()
     val totalCount by CrashLoopState.totalCrashCount.collectAsState()
     val logs by CrashLoopState.logs.collectAsState()
+    var showLogDialog by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -312,7 +327,10 @@ private fun CrashStatusCard() {
             }
             if (logs.isNotEmpty()) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Text(stringResource(R.string.recent_logs), style = MaterialTheme.typography.titleSmall)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.recent_logs), style = MaterialTheme.typography.titleSmall)
+                    TextButton(onClick = { showLogDialog = true }) { Text("查看输出") }
+                }
                 logs.take(5).forEach { entry ->
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(entry.packageName.substringAfterLast('.'), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
@@ -320,8 +338,63 @@ private fun CrashStatusCard() {
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(if (entry.success) Icons.Default.CheckCircle else Icons.Default.Error, null, tint = if (entry.success) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error, modifier = Modifier.size(14.dp))
                     }
+                    if (entry.output.isNotEmpty()) {
+                        Text(
+                            entry.output.take(120).replace("\n", " "),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (entry.success) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
+        }
+    }
+
+    if (showLogDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogDialog = false },
+            title = { Text("命令输出") },
+            text = {
+                val text = logs.take(20).joinToString("\n\n") { entry ->
+                    val status = if (entry.success) "OK" else "FAIL"
+                    "[$status] ${entry.timestamp} ${entry.packageName}\n${entry.output.ifEmpty { "(无输出)" }}"
+                }
+                Column(modifier = Modifier.heightIn(max = 400.dp)) {
+                    Text(
+                        text,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.verticalScroll(rememberScrollState())
+                    )
+                }
+            },
+            confirmButton = { TextButton(onClick = { showLogDialog = false }) { Text("关闭") } }
+        )
+    }
+}
+
+@Composable
+private fun DiagnosticCard() {
+    val diag by CrashLoopState.diagnostic.collectAsState()
+    if (diag.isEmpty()) return
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest)
+    ) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Terminal, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("诊断输出", style = MaterialTheme.typography.titleSmall)
+            }
+            Text(
+                diag,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.heightIn(max = 200.dp).verticalScroll(rememberScrollState())
+            )
         }
     }
 }

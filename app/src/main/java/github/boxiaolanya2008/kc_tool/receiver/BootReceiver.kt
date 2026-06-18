@@ -6,7 +6,6 @@ import android.content.Intent
 import android.util.Log
 import github.boxiaolanya2008.kc_tool.manager.SettingsManager
 import github.boxiaolanya2008.kc_tool.service.CrashLoopService
-import github.boxiaolanya2008.kc_tool.service.CrashLoopState
 
 class BootReceiver : BroadcastReceiver() {
     companion object {
@@ -26,7 +25,7 @@ class BootReceiver : BroadcastReceiver() {
             return
         }
 
-        val packages = CrashLoopState.targetPackages.value
+        val packages = settings.lastSelectedPackages.value.toList()
         if (packages.isEmpty()) {
             Log.d(TAG, "No previous crash targets, skipping")
             return

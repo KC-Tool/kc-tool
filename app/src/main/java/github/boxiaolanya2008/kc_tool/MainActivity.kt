@@ -17,7 +17,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import github.boxiaolanya2008.kc_tool.manager.LogManager
 import github.boxiaolanya2008.kc_tool.manager.SettingsManager
+import github.boxiaolanya2008.kc_tool.service.CrashLoopState
 import github.boxiaolanya2008.kc_tool.shizuku.ShizukuManager
 import github.boxiaolanya2008.kc_tool.ui.components.ShizukuStatusCard
 import github.boxiaolanya2008.kc_tool.ui.screens.CrashLoopScreen
@@ -29,11 +31,13 @@ class MainActivity : ComponentActivity() {
     private lateinit var settingsManager: SettingsManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        LogManager.get(this).installGlobalHandler(this)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         shizukuManager = ShizukuManager()
         shizukuManager.initialize()
         settingsManager = SettingsManager(applicationContext)
+        LogManager.get(this).write("MainActivity", "onCreate")
 
         setContent {
             KctoolTheme {

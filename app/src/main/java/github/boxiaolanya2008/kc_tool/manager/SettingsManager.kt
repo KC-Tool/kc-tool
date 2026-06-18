@@ -13,6 +13,8 @@ class SettingsManager(context: Context) {
         private const val KEY_DEFAULT_INTERVAL_SEC = "default_interval_sec"
         private const val KEY_DEFAULT_INTERVAL_MS = "default_interval_ms"
         private const val KEY_AUTO_START_ON_BOOT = "auto_start_on_boot"
+        private const val KEY_LAST_SELECTED_PACKAGES = "last_selected_packages"
+        private const val KEY_NO_NOTIFICATION_MODE = "no_notification_mode"
     }
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -28,6 +30,14 @@ class SettingsManager(context: Context) {
 
     private val _autoStartOnBoot = MutableStateFlow(prefs.getBoolean(KEY_AUTO_START_ON_BOOT, false))
     val autoStartOnBoot: StateFlow<Boolean> = _autoStartOnBoot.asStateFlow()
+
+    private val _lastSelectedPackages = MutableStateFlow(
+        runCatching { prefs.getStringSet(KEY_LAST_SELECTED_PACKAGES, emptySet()) ?: emptySet() }.getOrDefault(emptySet())
+    )
+    val lastSelectedPackages: StateFlow<Set<String>> = _lastSelectedPackages.asStateFlow()
+
+    private val _noNotificationMode = MutableStateFlow(prefs.getBoolean(KEY_NO_NOTIFICATION_MODE, false))
+    val noNotificationMode: StateFlow<Boolean> = _noNotificationMode.asStateFlow()
 
     fun setStealthMode(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_STEALTH_MODE, enabled).apply()
@@ -47,5 +57,15 @@ class SettingsManager(context: Context) {
     fun setAutoStartOnBoot(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_AUTO_START_ON_BOOT, enabled).apply()
         _autoStartOnBoot.value = enabled
+    }
+
+    fun setLastSelectedPackages(packages: Set<String>) {
+        prefs.edit().putStringSet(KEY_LAST_SELECTED_PACKAGES, packages).apply()
+        _lastSelectedPackages.value = packages
+    }
+
+    fun setNoNotificationMode(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_NO_NOTIFICATION_MODE, enabled).apply()
+        _noNotificationMode.value = enabled
     }
 }

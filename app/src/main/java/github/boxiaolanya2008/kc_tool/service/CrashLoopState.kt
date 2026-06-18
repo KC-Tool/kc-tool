@@ -32,24 +32,26 @@ object CrashLoopState {
         _targetPackages.value = packages
     }
 
-    fun incrementCrash(packageName: String) {
+    fun incrementCrash(packageName: String, output: String = "") {
         _crashCount.value++
         _totalCrashCount.value++
         val entry = CrashLogEntry(
             packageName = packageName,
             timestamp = timeFormat.format(Date()),
-            success = true
+            success = true,
+            output = output
         )
         _logs.value = listOf(entry) + _logs.value.take(99)
     }
 
-    fun failCrash(packageName: String) {
+    fun failCrash(packageName: String, output: String = "") {
         _crashCount.value++
         _totalCrashCount.value++
         val entry = CrashLogEntry(
             packageName = packageName,
             timestamp = timeFormat.format(Date()),
-            success = false
+            success = false,
+            output = output
         )
         _logs.value = listOf(entry) + _logs.value.take(99)
     }
@@ -65,10 +67,19 @@ object CrashLoopState {
         _targetPackages.value = emptyList()
         _logs.value = emptyList()
     }
+
+    // FIXME: debug only, remove later
+    private val _diagnostic = MutableStateFlow("")
+    val diagnostic: StateFlow<String> = _diagnostic.asStateFlow()
+
+    fun diag(msg: String) {
+        _diagnostic.value = "${timeFormat.format(Date())}  $msg\n${_diagnostic.value.take(800)}"
+    }
 }
 
 data class CrashLogEntry(
     val packageName: String,
     val timestamp: String,
-    val success: Boolean
+    val success: Boolean,
+    val output: String = ""
 )
