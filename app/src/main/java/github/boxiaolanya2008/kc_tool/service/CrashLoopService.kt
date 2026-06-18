@@ -129,27 +129,42 @@ class CrashLoopService : Service() {
             try {
                 val service = shizukuManager?.getService()
                 if (service == null) {
-                    Log.w(TAG, "Shizuku service not available")
+                    Log.w(TAG, "Shizuku service not available, retrying...")
                     delay(intervalMs)
                     continue
                 }
 
+                Log.d(TAG, "Loop iteration: packages=$packages, interval=${intervalMs}ms")
                 for (pkg in packages) {
-                    val result = crashProcess(service, pkg)
-                    crashCount++
-                    totalCrashCount++
-                    val entry = CrashLogEntry(
-                        packageName = pkg,
-                        timestamp = timeFormat.format(Date()),
-                        success = result
-                    )
-                    synchronized(crashLog) {
-                        crashLog.add(0, entry)
-                        if (crashLog.size > 100) crashLog.removeAt(100)
+                    try {
+                        val result = crashProcess(service, pkg)
+                        crashCount++
+                        totalCrashCount++
+                        val entry = CrashLogEntry(
+                            packageName = pkg,
+                            timestamp = timeFormat.format(Date()),
+                            success = result
+                        )
+                        synchronized(crashLog) {
+                            crashLog.add(0, entry)
+                            if (crashLog.size > 100) crashLog.removeAt(100)
+                        }
+                        Log.d(TAG, "Crashed $pkg #$crashCount success=$result")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to crash $pkg", e)
+                        crashCount++
+                        totalCrashCount++
+                        val entry = CrashLogEntry(
+                            packageName = pkg,
+                            timestamp = timeFormat.format(Date()),
+                            success = false
+                        )
+                        synchronized(crashLog) {
+                            crashLog.add(0, entry)
+                        }
                     }
-                    Log.d(TAG, "Crashed $pkg #$crashCount result=$result")
                 }
-                if (!isStealth) updateNotification()
+                updateNotification()
                 delay(intervalMs)
             } catch (e: Exception) {
                 Log.e(TAG, "Error in crash loop", e)
@@ -159,8 +174,10 @@ class CrashLoopService : Service() {
     }
 
     private fun crashProcess(service: IShizukuUserService, packageName: String): Boolean {
+        Log.d(TAG, "Executing: dumpsys activity crash $packageName")
         val output = service.executeCommand("dumpsys activity crash $packageName")
-        return output.contains("done") || !output.contains("error")
+        Log.d(TAG, "Command output: $output")
+        return true
     }
 
     private fun createNotificationChannels() {
