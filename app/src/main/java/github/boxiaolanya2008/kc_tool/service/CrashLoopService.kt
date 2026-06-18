@@ -106,12 +106,9 @@ class CrashLoopService : Service() {
                 }
 
                 for (pkg in packages) {
-                    val pid = getPid(service, pkg)
-                    if (pid != null) {
-                        crashProcess(service, pid)
-                        crashCount++
-                        Log.d(TAG, "Crashed $pkg (pid=$pid) #$crashCount")
-                    }
+                    crashProcess(service, pkg)
+                    crashCount++
+                    Log.d(TAG, "Crashed $pkg #$crashCount")
                 }
                 updateNotification()
                 delay(intervalMs)
@@ -122,17 +119,8 @@ class CrashLoopService : Service() {
         }
     }
 
-    private fun getPid(service: IShizukuUserService, packageName: String): String? {
-        val output = service.executeCommand("ps -A | grep -i $packageName")
-        return output.lineSequence()
-            .firstOrNull()
-            ?.trim()
-            ?.split("\\s+".toRegex())
-            ?.getOrNull(1)
-    }
-
-    private fun crashProcess(service: IShizukuUserService, pid: String) {
-        service.executeCommand("dumpsys activity crash $pid")
+    private fun crashProcess(service: IShizukuUserService, packageName: String) {
+        service.executeCommand("dumpsys activity crash $packageName")
     }
 
     private fun createNotificationChannel() {

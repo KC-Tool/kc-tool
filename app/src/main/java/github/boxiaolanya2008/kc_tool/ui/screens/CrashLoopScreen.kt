@@ -24,11 +24,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import github.boxiaolanya2008.kc_tool.R
 import github.boxiaolanya2008.kc_tool.service.CrashLoopService
 import github.boxiaolanya2008.kc_tool.ui.theme.KctoolTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import github.boxiaolanya2008.kc_tool.viewmodel.CrashLoopViewModel
 
 data class AppInfo(
     val packageName: String,
@@ -39,15 +39,16 @@ data class AppInfo(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CrashLoopScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    vm: CrashLoopViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    var apps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
-    var selectedApps by remember { mutableStateOf<Set<AppInfo>>(emptySet()) }
-    var searchQuery by remember { mutableStateOf("") }
-    var seconds by remember { mutableStateOf("0") }
-    var milliseconds by remember { mutableStateOf("500") }
-    var isRunning by remember { mutableStateOf(false) }
+    val apps by vm.apps.collectAsState()
+    val selectedApps by vm.selectedApps.collectAsState()
+    val searchQuery by vm.searchQuery.collectAsState()
+    val seconds by vm.seconds.collectAsState()
+    val milliseconds by vm.milliseconds.collectAsState()
+    val isRunning by vm.isRunning.collectAsState()
     var showAppPicker by remember { mutableStateOf(false) }
     var hasNotificationPermission by remember {
         mutableStateOf(checkNotificationPermission(context))
@@ -57,12 +58,6 @@ fun CrashLoopScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         hasNotificationPermission = granted
-    }
-
-    LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            apps = getInstalledApps(context)
-        }
     }
 
     val filteredApps = remember(apps, searchQuery) {
@@ -185,9 +180,7 @@ fun CrashLoopScreen(
                             selectedApps.forEach { app ->
                                 InputChip(
                                     selected = true,
-                                    onClick = {
-                                        selectedApps = selectedApps - app
-                                    },
+                                    onClick = { vm.toggleApp(app) },
                                     label = {
                                         Text(
                                             app.appName,
@@ -230,7 +223,7 @@ fun CrashLoopScreen(
                     ) {
                         OutlinedTextField(
                             value = seconds,
-                            onValueChange = { if (it.all { c -> c.isDigit() }) seconds = it },
+                            onValueChange = { vm.updateSeconds(it) },
                             label = { Text(stringResource(R.string.seconds)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f),
@@ -239,7 +232,7 @@ fun CrashLoopScreen(
 
                         OutlinedTextField(
                             value = milliseconds,
-                            onValueChange = { if (it.all { c -> c.isDigit() }) milliseconds = it },
+                            onValueChange = { vm.updateMilliseconds(it) },
                             label = { Text(stringResource(R.string.milliseconds)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f),
@@ -264,22 +257,21 @@ fun CrashLoopScreen(
                 onClick = {
                     if (isRunning) {
                         CrashLoopService.stop(context)
-                        isRunning = false
+                        vm.setRunning(false)
                     } else {
                         if (!hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                             return@Button
                         }
                         if (selectedApps.isNotEmpty()) {
-                            val totalMs = (seconds.toLongOrNull() ?: 0) * 1000 +
-                                    (milliseconds.toLongOrNull() ?: 0)
+                            val totalMs = vm.getTotalMs()
                             if (totalMs > 0) {
                                 CrashLoopService.startMultiple(
                                     context,
                                     selectedApps.map { it.packageName },
                                     totalMs
                                 )
-                                isRunning = true
+                                vm.setRunning(true)
                             }
                         }
                     }
@@ -318,19 +310,13 @@ fun CrashLoopScreen(
             apps = filteredApps,
             selectedApps = selectedApps,
             searchQuery = searchQuery,
-            onSearchQueryChange = { searchQuery = it },
-            onAppToggle = { app ->
-                selectedApps = if (app in selectedApps) {
-                    selectedApps - app
-                } else {
-                    selectedApps + app
-                }
-            },
-            onSelectAll = { selectedApps = filteredApps.toSet() },
-            onDeselectAll = { selectedApps = emptySet() },
+            onSearchQueryChange = { vm.updateSearchQuery(it) },
+            onAppToggle = { vm.toggleApp(it) },
+            onSelectAll = { vm.selectAll(filteredApps) },
+            onDeselectAll = { vm.deselectAll() },
             onDismiss = {
                 showAppPicker = false
-                searchQuery = ""
+                vm.updateSearchQuery("")
             }
         )
     }
@@ -454,20 +440,6 @@ private fun checkNotificationPermission(context: Context): Boolean {
             Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED
     } else true
-}
-
-private fun getInstalledApps(context: Context): List<AppInfo> {
-    val pm = context.packageManager
-    val packages = pm.getInstalledPackages(PackageManager.GET_META_DATA)
-
-    return packages.mapNotNull { info ->
-        val appInfo = info.applicationInfo ?: return@mapNotNull null
-        AppInfo(
-            packageName = info.packageName,
-            appName = appInfo.loadLabel(pm).toString(),
-            isSystemApp = (appInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
-        )
-    }.sortedWith(compareByDescending<AppInfo> { it.isSystemApp }.thenBy { it.appName })
 }
 
 @Preview(showBackground = true)
