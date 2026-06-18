@@ -112,7 +112,12 @@ class CrashLoopService : Service() {
             for (pkg in packages) {
                 try {
                     Log.d(TAG, ">>> Crashing $pkg ...")
-                    val output = execCommand("dumpsys activity crash $pkg")
+                    val output = try {
+                        execCommand(arrayOf("dumpsys", "activity", "crash", pkg))
+                    } catch (e: Exception) {
+                        Log.w(TAG, "dumpsys failed, try am crash: $pkg")
+                        execCommand(arrayOf("am", "crash", pkg))
+                    }
                     CrashLoopState.incrementCrash(pkg)
                     Log.d(TAG, "<<< OK: $pkg output=${output.take(200)}")
                 } catch (e: Exception) {
@@ -125,30 +130,37 @@ class CrashLoopService : Service() {
         }
     }
 
-    private suspend fun execCommand(command: String): String {
-        Log.d(TAG, "execCommand: $command")
+    private suspend fun execCommand(args: Array<String>): String {
+        val cmd = args.joinToString(" ")
+        Log.d(TAG, "execCommand: $cmd")
         try {
-            val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
-            Log.d(TAG, "process created, pid=${process.hashCode()}")
+            val process = Shizuku.newProcess(args, null, null)
+            Log.d(TAG, "process created")
 
-            // 并发读取 stdout 和 stderr，防止缓冲区满导致死锁
-            val (output, error) = coroutineScope {
-                val outputDeferred = async(Dispatchers.IO) {
-                    process.inputStream.bufferedReader().readText()
+            val (output, error, exitCode) = withTimeout(15_000) {
+                coroutineScope {
+                    val outDeferred = async(Dispatchers.IO) {
+                        runCatching { process.inputStream.bufferedReader().readText() }.getOrDefault("")
+                    }
+                    val errDeferred = async(Dispatchers.IO) {
+                        runCatching { process.errorStream.bufferedReader().readText() }.getOrDefault("")
+                    }
+                    val code = process.waitFor()
+                    Triple(outDeferred.await(), errDeferred.await(), code)
                 }
-                val errorDeferred = async(Dispatchers.IO) {
-                    process.errorStream.bufferedReader().readText()
-                }
-                val exitCode = process.waitFor()
-                Log.d(TAG, "exitCode=$exitCode")
-                Pair(outputDeferred.await(), errorDeferred.await())
             }
 
-            Log.d(TAG, "output=${output.take(200)}, error=${error.take(200)}")
-            if (error.isNotEmpty()) Log.w(TAG, "stderr: ${error.take(200)}")
+            Log.d(TAG, "exitCode=$exitCode, out=${output.take(200)}, err=${error.take(200)}")
+            if (exitCode != 0)
+                throw RuntimeException("exitCode=$exitCode, stderr=$error")
+            if (error.isNotEmpty()) {
+                val e = error.lowercase()
+                if (e.contains("unable") || e.contains("fail") || e.contains("permission denied") || e.contains("not found") || e.contains("error"))
+                    throw RuntimeException("cmd error: $error")
+            }
             return output.ifEmpty { error }
         } catch (e: Exception) {
-            Log.e(TAG, "execCommand failed: $command", e)
+            Log.e(TAG, "execCommand failed: $cmd", e)
             throw e
         }
     }
