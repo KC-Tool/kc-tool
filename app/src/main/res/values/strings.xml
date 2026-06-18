@@ -51,6 +51,8 @@
     <string name="settings_auto_start_desc">设备启动后自动恢复服务</string>
     <string name="settings_about">kc-tool v1.0 — 基于 Shizuku 的系统优化工具</string>
 
+    <string name="notification_test_success">通知权限已授权，通知功能正常</string>
+
     <string name="nav_home">首页</string>
     <string name="nav_crash_loop">循环崩溃</string>
     <string name="nav_settings">设置</string>

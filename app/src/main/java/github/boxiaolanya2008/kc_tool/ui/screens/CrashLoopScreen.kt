@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import github.boxiaolanya2008.kc_tool.R
+import github.boxiaolanya2008.kc_tool.manager.NotificationHelper
 import github.boxiaolanya2008.kc_tool.manager.SettingsManager
 import github.boxiaolanya2008.kc_tool.service.CrashLoopService
 import github.boxiaolanya2008.kc_tool.viewmodel.CrashLoopViewModel
@@ -59,6 +60,9 @@ fun CrashLoopScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         hasNotificationPermission = granted
+        if (granted) {
+            NotificationHelper.sendTestNotification(context)
+        }
     }
 
     val filteredApps = remember(apps, searchQuery) {
