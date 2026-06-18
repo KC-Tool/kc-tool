@@ -74,19 +74,19 @@ class ShizukuManager {
         }
     }
 
+    private fun buildUserServiceArgs() = Shizuku.UserServiceArgs(
+        ComponentName(
+            "github.boxiaolanya2008.kc_tool",
+            ShizukuUserService::class.java.name
+        )
+    ).processNameSuffix("shizuku")
+        .daemon(false)
+
     private fun bindUserService() {
         if (isBound) return
 
         try {
-            Shizuku.bindUserService(
-                Shizuku.UserServiceArgs(
-                    ComponentName(
-                        "github.boxiaolanya2008.kc_tool",
-                        ShizukuUserService::class.java.name
-                    )
-                ).daemon(false),
-                userServiceConnection
-            )
+            Shizuku.bindUserService(buildUserServiceArgs(), userServiceConnection)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to bind UserService", e)
         }
@@ -97,12 +97,7 @@ class ShizukuManager {
 
         try {
             Shizuku.unbindUserService(
-                Shizuku.UserServiceArgs(
-                    ComponentName(
-                        "github.boxiaolanya2008.kc_tool",
-                        ShizukuUserService::class.java.name
-                    )
-                ),
+                buildUserServiceArgs(),
                 userServiceConnection,
                 true
             )
