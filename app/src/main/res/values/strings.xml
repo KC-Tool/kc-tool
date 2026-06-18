@@ -53,6 +53,12 @@
 
     <string name="notification_test_success">通知权限已授权，通知功能正常</string>
 
+    <string name="crash_status">崩溃状态</string>
+    <string name="running">运行中</string>
+    <string name="stopped">已停止</string>
+    <string name="total_crashes">总崩溃次数</string>
+    <string name="recent_logs">最近记录</string>
+
     <string name="nav_home">首页</string>
     <string name="nav_crash_loop">循环崩溃</string>
     <string name="nav_settings">设置</string>

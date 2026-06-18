@@ -7,16 +7,16 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import github.boxiaolanya2008.kc_tool.MainActivity
 import github.boxiaolanya2008.kc_tool.R
-import github.boxiaolanya2008.kc_tool.manager.SettingsManager
 import github.boxiaolanya2008.kc_tool.shizuku.IShizukuUserService
 import github.boxiaolanya2008.kc_tool.shizuku.ShizukuManager
 import kotlinx.coroutines.*
+import java.text.SimpleDateFormat
+import java.util.*
 
 class CrashLoopService : Service() {
     companion object {
@@ -29,6 +29,14 @@ class CrashLoopService : Service() {
         private const val EXTRA_PACKAGE_NAMES = "package_names"
         private const val EXTRA_INTERVAL_MS = "interval_ms"
         private const val EXTRA_STEALTH = "stealth"
+
+        val crashLog = mutableListOf<CrashLogEntry>()
+        var isServiceRunning = false
+            private set
+        var totalCrashCount = 0
+            private set
+        var currentTargetPackages = emptyList<String>()
+            private set
 
         fun start(context: Context, packageName: String, intervalMs: Long, stealth: Boolean = false) {
             val intent = Intent(context, CrashLoopService::class.java).apply {
@@ -51,6 +59,10 @@ class CrashLoopService : Service() {
         fun stop(context: Context) {
             context.stopService(Intent(context, CrashLoopService::class.java))
         }
+
+        fun clearLog() {
+            crashLog.clear()
+        }
     }
 
     private var serviceJob: Job? = null
@@ -60,6 +72,7 @@ class CrashLoopService : Service() {
     private var currentPackages = emptyList<String>()
     private var currentIntervalMs = 0L
     private var isStealth = false
+    private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -86,6 +99,9 @@ class CrashLoopService : Service() {
         currentIntervalMs = intervalMs
         crashCount = 0
 
+        isServiceRunning = true
+        currentTargetPackages = packages
+
         startForeground(NOTIFICATION_ID, buildNotification())
 
         if (isStealth) {
@@ -104,6 +120,7 @@ class CrashLoopService : Service() {
         serviceJob?.cancel()
         scope.cancel()
         shizukuManager?.destroy()
+        isServiceRunning = false
         super.onDestroy()
     }
 
@@ -118,9 +135,19 @@ class CrashLoopService : Service() {
                 }
 
                 for (pkg in packages) {
-                    crashProcess(service, pkg)
+                    val result = crashProcess(service, pkg)
                     crashCount++
-                    Log.d(TAG, "Crashed $pkg #$crashCount")
+                    totalCrashCount++
+                    val entry = CrashLogEntry(
+                        packageName = pkg,
+                        timestamp = timeFormat.format(Date()),
+                        success = result
+                    )
+                    synchronized(crashLog) {
+                        crashLog.add(0, entry)
+                        if (crashLog.size > 100) crashLog.removeAt(100)
+                    }
+                    Log.d(TAG, "Crashed $pkg #$crashCount result=$result")
                 }
                 if (!isStealth) updateNotification()
                 delay(intervalMs)
@@ -131,8 +158,9 @@ class CrashLoopService : Service() {
         }
     }
 
-    private fun crashProcess(service: IShizukuUserService, packageName: String) {
-        service.executeCommand("dumpsys activity crash $packageName")
+    private fun crashProcess(service: IShizukuUserService, packageName: String): Boolean {
+        val output = service.executeCommand("dumpsys activity crash $packageName")
+        return output.contains("done") || !output.contains("error")
     }
 
     private fun createNotificationChannels() {
@@ -220,3 +248,9 @@ class CrashLoopService : Service() {
         manager.notify(NOTIFICATION_ID, buildNotification())
     }
 }
+
+data class CrashLogEntry(
+    val packageName: String,
+    val timestamp: String,
+    val success: Boolean
+)
