@@ -26,9 +26,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import github.boxiaolanya2008.kc_tool.R
 import github.boxiaolanya2008.kc_tool.manager.SettingsManager
-import github.boxiaolanya2008.kc_tool.ui.components.HdrCard
-import github.boxiaolanya2008.kc_tool.ui.components.HdrDivider
-import github.boxiaolanya2008.kc_tool.ui.components.HdrGlowBox
 import github.boxiaolanya2008.kc_tool.service.CrashLoopService
 import github.boxiaolanya2008.kc_tool.viewmodel.CrashLoopViewModel
 
@@ -155,8 +152,11 @@ fun CrashLoopScreen(
                 }
             }
 
-            HdrCard(
-                modifier = Modifier.fillMaxWidth()
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -230,8 +230,11 @@ fun CrashLoopScreen(
                 }
             }
 
-            HdrCard(
-                modifier = Modifier.fillMaxWidth()
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),

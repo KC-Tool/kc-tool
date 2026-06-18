@@ -19,9 +19,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import github.boxiaolanya2008.kc_tool.R
 import github.boxiaolanya2008.kc_tool.manager.SettingsManager
-import github.boxiaolanya2008.kc_tool.ui.components.HdrCard
-import github.boxiaolanya2008.kc_tool.ui.components.HdrDivider
-import github.boxiaolanya2008.kc_tool.ui.components.HdrGlowBox
 import github.boxiaolanya2008.kc_tool.ui.theme.KctoolTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -153,7 +150,10 @@ private fun SettingsSection(
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
         )
-        HdrCard(
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(vertical = 4.dp)) {
