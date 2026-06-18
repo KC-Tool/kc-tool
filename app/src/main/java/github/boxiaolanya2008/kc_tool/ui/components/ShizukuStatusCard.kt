@@ -1,26 +1,13 @@
 package github.boxiaolanya2008.kc_tool.ui.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -41,9 +28,9 @@ fun ShizukuStatusCard(
 ) {
     val statusColor by animateColorAsState(
         targetValue = when {
-            isConnected && hasPermission -> Color(0xFF4CAF50)
-            hasPermission -> Color(0xFFFFC107)
-            else -> Color(0xFFF44336)
+            isConnected && hasPermission -> MaterialTheme.colorScheme.primary
+            hasPermission -> MaterialTheme.colorScheme.tertiary
+            else -> MaterialTheme.colorScheme.error
         },
         label = "statusColor"
     )
@@ -51,87 +38,139 @@ fun ShizukuStatusCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    imageVector = Icons.Default.Security,
-                    contentDescription = stringResource(R.string.shizuku_status),
-                    tint = statusColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = stringResource(R.string.shizuku_status),
-                    style = MaterialTheme.typography.titleMedium
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = statusColor.copy(alpha = 0.12f),
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = when {
-                                isConnected -> Icons.Default.CheckCircle
-                                else -> Icons.Default.Error
-                            },
+                            imageVector = Icons.Default.Security,
                             contentDescription = null,
-                            tint = if (isConnected) Color(0xFF4CAF50) else Color(0xFFF44336),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (isConnected) {
-                                stringResource(R.string.shizuku_connected)
-                            } else {
-                                stringResource(R.string.shizuku_disconnected)
-                            },
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = when {
-                                hasPermission -> Icons.Default.CheckCircle
-                                else -> Icons.Default.Warning
-                            },
-                            contentDescription = null,
-                            tint = if (hasPermission) Color(0xFF4CAF50) else Color(0xFFFFC107),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (hasPermission) {
-                                stringResource(R.string.permission_granted)
-                            } else {
-                                stringResource(R.string.permission_required)
-                            },
-                            style = MaterialTheme.typography.bodyMedium
+                            tint = statusColor,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.shizuku_status),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = if (isConnected && hasPermission) {
+                            stringResource(R.string.shizuku_all_ready)
+                        } else {
+                            stringResource(R.string.shizuku_setup_required)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = when {
+                        isConnected -> Icons.Default.CheckCircle
+                        else -> Icons.Default.Error
+                    },
+                    contentDescription = null,
+                    tint = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (isConnected) {
+                        stringResource(R.string.shizuku_connected)
+                    } else {
+                        stringResource(R.string.shizuku_disconnected)
+                    },
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Surface(
+                    shape = MaterialTheme.shapes.extraSmall,
+                    color = if (isConnected) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.errorContainer
+                    }
+                ) {
+                    Text(
+                        text = if (isConnected) "ON" else "OFF",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isConnected) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onErrorContainer
+                        }
+                    )
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = when {
+                        hasPermission -> Icons.Default.CheckCircle
+                        else -> Icons.Default.Warning
+                    },
+                    contentDescription = null,
+                    tint = if (hasPermission) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (hasPermission) {
+                        stringResource(R.string.permission_granted)
+                    } else {
+                        stringResource(R.string.permission_required)
+                    },
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.weight(1f))
                 if (!hasPermission) {
-                    FilledTonalButton(
-                        onClick = onRequestPermission
+                    Button(
+                        onClick = onRequestPermission,
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                     ) {
-                        Text(text = stringResource(R.string.request_permission))
+                        Text(
+                            text = stringResource(R.string.request_permission),
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                } else {
+                    Surface(
+                        shape = MaterialTheme.shapes.extraSmall,
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = "OK",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     }
                 }
             }

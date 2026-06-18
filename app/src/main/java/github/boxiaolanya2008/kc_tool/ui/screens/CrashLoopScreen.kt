@@ -7,7 +7,6 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -43,13 +43,12 @@ fun CrashLoopScreen(
 ) {
     val context = LocalContext.current
     var apps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
-    var selectedApp by remember { mutableStateOf<AppInfo?>(null) }
+    var selectedApps by remember { mutableStateOf<Set<AppInfo>>(emptySet()) }
     var searchQuery by remember { mutableStateOf("") }
     var seconds by remember { mutableStateOf("0") }
     var milliseconds by remember { mutableStateOf("500") }
     var isRunning by remember { mutableStateOf(false) }
     var showAppPicker by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(true) }
     var hasNotificationPermission by remember {
         mutableStateOf(checkNotificationPermission(context))
     }
@@ -63,7 +62,6 @@ fun CrashLoopScreen(
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
             apps = getInstalledApps(context)
-            isLoading = false
         }
     }
 
@@ -80,7 +78,8 @@ fun CrashLoopScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.crash_loop_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         }
@@ -88,11 +87,15 @@ fun CrashLoopScreen(
         Column(
             modifier = modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (!hasNotificationPermission) {
+            AnimatedVisibility(
+                visible = !hasNotificationPermission,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer
@@ -105,14 +108,15 @@ fun CrashLoopScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Icon(
-                            Icons.Default.Warning,
+                            Icons.Default.NotificationsOff,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.error
                         )
                         Text(
                             text = stringResource(R.string.notification_permission_hint),
                             modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
                         )
                         FilledTonalButton(
                             onClick = {
@@ -126,22 +130,45 @@ fun CrashLoopScreen(
             }
 
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = stringResource(R.string.target_app),
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = stringResource(R.string.target_app),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        if (selectedApps.isNotEmpty()) {
+                            AssistChip(
+                                onClick = { showAppPicker = true },
+                                label = { Text("${selectedApps.size}") },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Edit,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            )
+                        }
+                    }
 
                     OutlinedTextField(
-                        value = selectedApp?.appName ?: "",
+                        value = selectedApps.joinToString { it.appName },
                         onValueChange = {},
-                        label = { Text(stringResource(R.string.selected_app)) },
+                        label = { Text(stringResource(R.string.selected_apps)) },
                         readOnly = true,
+                        placeholder = { Text(stringResource(R.string.tap_to_select)) },
                         trailingIcon = {
                             IconButton(onClick = { showAppPicker = true }) {
                                 Icon(Icons.Default.Search, contentDescription = null)
@@ -150,18 +177,43 @@ fun CrashLoopScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    if (selectedApp != null) {
-                        Text(
-                            text = selectedApp!!.packageName,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    if (selectedApps.isNotEmpty()) {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            selectedApps.forEach { app ->
+                                InputChip(
+                                    selected = true,
+                                    onClick = {
+                                        selectedApps = selectedApps - app
+                                    },
+                                    label = {
+                                        Text(
+                                            app.appName,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    },
+                                    trailingIcon = {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
 
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -181,7 +233,8 @@ fun CrashLoopScreen(
                             onValueChange = { if (it.all { c -> c.isDigit() }) seconds = it },
                             label = { Text(stringResource(R.string.seconds)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
                         )
 
                         OutlinedTextField(
@@ -189,7 +242,8 @@ fun CrashLoopScreen(
                             onValueChange = { if (it.all { c -> c.isDigit() }) milliseconds = it },
                             label = { Text(stringResource(R.string.milliseconds)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
                         )
                     }
 
@@ -216,11 +270,15 @@ fun CrashLoopScreen(
                             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                             return@Button
                         }
-                        selectedApp?.let { app ->
+                        if (selectedApps.isNotEmpty()) {
                             val totalMs = (seconds.toLongOrNull() ?: 0) * 1000 +
                                     (milliseconds.toLongOrNull() ?: 0)
                             if (totalMs > 0) {
-                                CrashLoopService.start(context, app.packageName, totalMs)
+                                CrashLoopService.startMultiple(
+                                    context,
+                                    selectedApps.map { it.packageName },
+                                    totalMs
+                                )
                                 isRunning = true
                             }
                         }
@@ -233,8 +291,10 @@ fun CrashLoopScreen(
                         MaterialTheme.colorScheme.primary
                     }
                 ),
-                modifier = Modifier.fillMaxWidth(),
-                enabled = selectedApp != null
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                enabled = selectedApps.isNotEmpty()
             ) {
                 Icon(
                     imageVector = if (isRunning) Icons.Default.Stop else Icons.Default.PlayArrow,
@@ -256,13 +316,18 @@ fun CrashLoopScreen(
     if (showAppPicker) {
         AppPickerDialog(
             apps = filteredApps,
+            selectedApps = selectedApps,
             searchQuery = searchQuery,
             onSearchQueryChange = { searchQuery = it },
-            onAppSelected = { app ->
-                selectedApp = app
-                showAppPicker = false
-                searchQuery = ""
+            onAppToggle = { app ->
+                selectedApps = if (app in selectedApps) {
+                    selectedApps - app
+                } else {
+                    selectedApps + app
+                }
             },
+            onSelectAll = { selectedApps = filteredApps.toSet() },
+            onDeselectAll = { selectedApps = emptySet() },
             onDismiss = {
                 showAppPicker = false
                 searchQuery = ""
@@ -275,14 +340,26 @@ fun CrashLoopScreen(
 @Composable
 private fun AppPickerDialog(
     apps: List<AppInfo>,
+    selectedApps: Set<AppInfo>,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    onAppSelected: (AppInfo) -> Unit,
+    onAppToggle: (AppInfo) -> Unit,
+    onSelectAll: () -> Unit,
+    onDeselectAll: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.select_app)) },
+        title = {
+            Column {
+                Text(stringResource(R.string.select_app))
+                Text(
+                    text = stringResource(R.string.selected_count, selectedApps.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
         text = {
             Column {
                 OutlinedTextField(
@@ -290,8 +367,29 @@ private fun AppPickerDialog(
                     onValueChange = onSearchQueryChange,
                     label = { Text(stringResource(R.string.search_app)) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilledTonalButton(
+                        onClick = onSelectAll,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.select_all), style = MaterialTheme.typography.labelMedium)
+                    }
+                    FilledTonalButton(
+                        onClick = onDeselectAll,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.deselect_all), style = MaterialTheme.typography.labelMedium)
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -302,15 +400,24 @@ private fun AppPickerDialog(
                         items = apps,
                         key = { it.packageName }
                     ) { app ->
+                        val isSelected = app in selectedApps
                         ListItem(
                             headlineContent = { Text(app.appName) },
                             supportingContent = {
                                 Text(
                                     app.packageName,
-                                    style = MaterialTheme.typography.bodySmall
+                                    style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             },
                             leadingContent = {
+                                Checkbox(
+                                    checked = isSelected,
+                                    onCheckedChange = { onAppToggle(app) }
+                                )
+                            },
+                            trailingContent = {
                                 Icon(
                                     imageVector = if (app.isSystemApp) {
                                         Icons.Default.Android
@@ -322,10 +429,11 @@ private fun AppPickerDialog(
                                         MaterialTheme.colorScheme.primary
                                     } else {
                                         MaterialTheme.colorScheme.onSurfaceVariant
-                                    }
+                                    },
+                                    modifier = Modifier.size(20.dp)
                                 )
                             },
-                            modifier = Modifier.clickable { onAppSelected(app) }
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
@@ -333,7 +441,7 @@ private fun AppPickerDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(R.string.confirm))
             }
         }
     )

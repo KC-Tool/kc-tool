@@ -1,34 +1,46 @@
 <resources>
     <string name="app_name">kc-tool</string>
-    <string name="shizuku_status">Shizuku Status</string>
-    <string name="shizuku_connected">Shizuku Connected</string>
-    <string name="shizuku_disconnected">Shizuku Disconnected</string>
-    <string name="permission_granted">Permission Granted</string>
-    <string name="permission_required">Permission Required</string>
-    <string name="request_permission">Request Permission</string>
 
-    <string name="crash_loop_title">Loop Crash System App</string>
-    <string name="target_app">Target App</string>
-    <string name="selected_app">Selected App</string>
-    <string name="interval_settings">Interval Settings</string>
-    <string name="seconds">Seconds</string>
-    <string name="milliseconds">Milliseconds</string>
-    <string name="total_interval">Total: %d ms</string>
-    <string name="start_crash_loop">Start Loop</string>
-    <string name="stop_crash_loop">Stop Loop</string>
-    <string name="select_app">Select App</string>
-    <string name="search_app">Search app name or package…</string>
-    <string name="cancel">Cancel</string>
+    <string name="shizuku_status">Shizuku 状态</string>
+    <string name="shizuku_connected">Shizuku 已连接</string>
+    <string name="shizuku_disconnected">Shizuku 未连接</string>
+    <string name="shizuku_all_ready">一切就绪</string>
+    <string name="shizuku_setup_required">需要设置</string>
+    <string name="permission_granted">权限已授予</string>
+    <string name="permission_required">需要权限</string>
+    <string name="request_permission">授权</string>
 
-    <string name="crash_loop_channel_name">Crash Loop Service</string>
-    <string name="crash_loop_channel_desc">Notification for crash loop service</string>
-    <string name="crash_loop_running">Crash loop running</string>
-    <string name="target">Target</string>
-    <string name="crash_count">Crashes</string>
-    <string name="stop">Stop</string>
-    <string name="notification_permission_hint">Notification permission required for real-time status</string>
-    <string name="grant">Grant</string>
+    <string name="home_subtitle">系统优化工具箱</string>
+    <string name="home_tips_title">使用提示</string>
+    <string name="home_tips_content">请确保已安装并启动 Shizuku，且已授予本应用 Shizuku 权限。</string>
 
-    <string name="nav_home">Home</string>
-    <string name="nav_crash_loop">Crash Loop</string>
+    <string name="crash_loop_title">循环崩溃应用</string>
+    <string name="target_app">目标应用</string>
+    <string name="selected_apps">已选应用</string>
+    <string name="tap_to_select">点击选择应用</string>
+    <string name="selected_count">已选 %d 个</string>
+    <string name="interval_settings">崩溃间隔</string>
+    <string name="seconds">秒</string>
+    <string name="milliseconds">毫秒</string>
+    <string name="total_interval">总间隔：%d ms</string>
+    <string name="start_crash_loop">开始循环</string>
+    <string name="stop_crash_loop">停止循环</string>
+    <string name="select_app">选择应用</string>
+    <string name="search_app">搜索应用名或包名…</string>
+    <string name="select_all">全选</string>
+    <string name="deselect_all">取消全选</string>
+    <string name="confirm">确定</string>
+    <string name="cancel">取消</string>
+
+    <string name="crash_loop_channel_name">循环崩溃服务</string>
+    <string name="crash_loop_channel_desc">循环崩溃服务的通知</string>
+    <string name="crash_loop_running">循环崩溃运行中</string>
+    <string name="target">目标</string>
+    <string name="crash_count">崩溃次数</string>
+    <string name="stop">停止</string>
+    <string name="notification_permission_hint">需要通知权限以显示实时运行状态</string>
+    <string name="grant">授权</string>
+
+    <string name="nav_home">首页</string>
+    <string name="nav_crash_loop">循环崩溃</string>
 </resources>

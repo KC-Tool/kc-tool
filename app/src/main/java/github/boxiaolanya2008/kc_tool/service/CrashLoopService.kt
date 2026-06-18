@@ -23,12 +23,20 @@ class CrashLoopService : Service() {
         private const val NOTIFICATION_ID = 1001
         const val ACTION_STOP = "github.boxiaolanya2008.kc_tool.STOP_CRASH_LOOP"
 
-        private const val EXTRA_PACKAGE_NAME = "package_name"
+        private const val EXTRA_PACKAGE_NAMES = "package_names"
         private const val EXTRA_INTERVAL_MS = "interval_ms"
 
         fun start(context: Context, packageName: String, intervalMs: Long) {
             val intent = Intent(context, CrashLoopService::class.java).apply {
-                putExtra(EXTRA_PACKAGE_NAME, packageName)
+                putExtra(EXTRA_PACKAGE_NAMES, arrayOf(packageName))
+                putExtra(EXTRA_INTERVAL_MS, intervalMs)
+            }
+            context.startForegroundService(intent)
+        }
+
+        fun startMultiple(context: Context, packageNames: List<String>, intervalMs: Long) {
+            val intent = Intent(context, CrashLoopService::class.java).apply {
+                putExtra(EXTRA_PACKAGE_NAMES, packageNames.toTypedArray())
                 putExtra(EXTRA_INTERVAL_MS, intervalMs)
             }
             context.startForegroundService(intent)
@@ -43,7 +51,7 @@ class CrashLoopService : Service() {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var shizukuManager: ShizukuManager? = null
     private var crashCount = 0
-    private var currentPackage = ""
+    private var currentPackages = emptyList<String>()
     private var currentIntervalMs = 0L
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -60,13 +68,13 @@ class CrashLoopService : Service() {
             return START_NOT_STICKY
         }
 
-        val packageName = intent?.getStringExtra(EXTRA_PACKAGE_NAME) ?: run {
+        val packages = intent?.getStringArrayExtra(EXTRA_PACKAGE_NAMES)?.toList() ?: run {
             stopSelf()
             return START_NOT_STICKY
         }
         val intervalMs = intent.getLongExtra(EXTRA_INTERVAL_MS, 1000L)
 
-        currentPackage = packageName
+        currentPackages = packages
         currentIntervalMs = intervalMs
         crashCount = 0
 
@@ -74,7 +82,7 @@ class CrashLoopService : Service() {
 
         serviceJob?.cancel()
         serviceJob = scope.launch {
-            loopCrash(packageName, intervalMs)
+            loopCrash(packages, intervalMs)
         }
 
         return START_NOT_STICKY
@@ -87,7 +95,7 @@ class CrashLoopService : Service() {
         super.onDestroy()
     }
 
-    private suspend fun loopCrash(packageName: String, intervalMs: Long) {
+    private suspend fun loopCrash(packages: List<String>, intervalMs: Long) {
         while (true) {
             try {
                 val service = shizukuManager?.getService()
@@ -97,16 +105,15 @@ class CrashLoopService : Service() {
                     continue
                 }
 
-                val pid = getPid(service, packageName)
-                if (pid != null) {
-                    crashProcess(service, pid)
-                    crashCount++
-                    updateNotification()
-                    Log.d(TAG, "Crashed $packageName (pid=$pid) #$crashCount")
-                } else {
-                    Log.w(TAG, "Process not found for $packageName")
+                for (pkg in packages) {
+                    val pid = getPid(service, pkg)
+                    if (pid != null) {
+                        crashProcess(service, pid)
+                        crashCount++
+                        Log.d(TAG, "Crashed $pkg (pid=$pid) #$crashCount")
+                    }
                 }
-
+                updateNotification()
                 delay(intervalMs)
             } catch (e: Exception) {
                 Log.e(TAG, "Error in crash loop", e)
@@ -155,10 +162,16 @@ class CrashLoopService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
+        val pkgText = if (currentPackages.size > 2) {
+            "${currentPackages.take(2).joinToString()} +${currentPackages.size - 2}"
+        } else {
+            currentPackages.joinToString()
+        }
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.crash_loop_running))
             .setContentText(
-                "${getString(R.string.target)}: $currentPackage | " +
+                "${getString(R.string.target)}: $pkgText | " +
                         "${getString(R.string.crash_count)}: $crashCount | " +
                         "${currentIntervalMs}ms"
             )
