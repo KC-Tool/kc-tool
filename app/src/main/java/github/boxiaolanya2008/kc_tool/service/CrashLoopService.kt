@@ -132,18 +132,19 @@ class CrashLoopService : Service() {
             Log.d(TAG, "process created, pid=${process.hashCode()}")
 
             // 并发读取 stdout 和 stderr，防止缓冲区满导致死锁
-            val outputDeferred = async(Dispatchers.IO) {
-                process.inputStream.bufferedReader().readText()
-            }
-            val errorDeferred = async(Dispatchers.IO) {
-                process.errorStream.bufferedReader().readText()
+            val (output, error) = coroutineScope {
+                val outputDeferred = async(Dispatchers.IO) {
+                    process.inputStream.bufferedReader().readText()
+                }
+                val errorDeferred = async(Dispatchers.IO) {
+                    process.errorStream.bufferedReader().readText()
+                }
+                val exitCode = process.waitFor()
+                Log.d(TAG, "exitCode=$exitCode")
+                Pair(outputDeferred.await(), errorDeferred.await())
             }
 
-            val exitCode = process.waitFor()
-            val output = outputDeferred.await()
-            val error = errorDeferred.await()
-
-            Log.d(TAG, "exitCode=$exitCode, output=${output.take(200)}, error=${error.take(200)}")
+            Log.d(TAG, "output=${output.take(200)}, error=${error.take(200)}")
             if (error.isNotEmpty()) Log.w(TAG, "stderr: ${error.take(200)}")
             return output.ifEmpty { error }
         } catch (e: Exception) {
