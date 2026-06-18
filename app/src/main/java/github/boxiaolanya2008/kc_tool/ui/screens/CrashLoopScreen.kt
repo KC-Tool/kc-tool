@@ -10,7 +10,9 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -60,9 +62,7 @@ fun CrashLoopScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         hasNotificationPermission = granted
-        if (granted) {
-            NotificationHelper.sendTestNotification(context)
-        }
+        if (granted) NotificationHelper.sendTestNotification(context)
     }
 
     val filteredApps = remember(apps, searchQuery) {
@@ -84,210 +84,111 @@ fun CrashLoopScreen(
             )
         }
     ) { padding ->
-        Column(
+        Box(
             modifier = modifier
                 .padding(padding)
-                .padding(horizontal = 16.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxSize()
         ) {
-            AnimatedVisibility(
-                visible = !hasNotificationPermission,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 80.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                AnimatedVisibility(
+                    visible = !hasNotificationPermission,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(
-                            Icons.Default.NotificationsOff,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                        Text(
-                            text = stringResource(R.string.notification_permission_hint),
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        FilledTonalButton(
-                            onClick = {
-                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                            }
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text(stringResource(R.string.grant))
+                            Icon(Icons.Default.NotificationsOff, null, tint = MaterialTheme.colorScheme.error)
+                            Text(
+                                text = stringResource(R.string.notification_permission_hint),
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            FilledTonalButton(onClick = { notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) }) {
+                                Text(stringResource(R.string.grant))
+                            }
                         }
                     }
                 }
-            }
 
-            if (stealthMode) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.VisibilityOff,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.stealth_mode_active),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                    }
-                }
-            }
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                if (stealthMode) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = stringResource(R.string.target_app),
-                            style = MaterialTheme.typography.titleMedium
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.VisibilityOff, null, tint = MaterialTheme.colorScheme.onTertiaryContainer, modifier = Modifier.size(18.dp))
+                            Text(stringResource(R.string.stealth_mode_active), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                        }
+                    }
+                }
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.target_app), style = MaterialTheme.typography.titleMedium)
+                            if (selectedApps.isNotEmpty()) {
+                                AssistChip(onClick = { showAppPicker = true }, label = { Text("${selectedApps.size}") }, leadingIcon = { Icon(Icons.Default.Edit, null, modifier = Modifier.size(16.dp)) })
+                            }
+                        }
+                        OutlinedTextField(
+                            value = selectedApps.joinToString { it.appName },
+                            onValueChange = {},
+                            label = { Text(stringResource(R.string.selected_apps)) },
+                            readOnly = true,
+                            placeholder = { Text(stringResource(R.string.tap_to_select)) },
+                            trailingIcon = { IconButton(onClick = { showAppPicker = true }) { Icon(Icons.Default.Search, null) } },
+                            modifier = Modifier.fillMaxWidth()
                         )
                         if (selectedApps.isNotEmpty()) {
-                            AssistChip(
-                                onClick = { showAppPicker = true },
-                                label = { Text("${selectedApps.size}") },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Edit,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
-                                    )
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                selectedApps.forEach { app ->
+                                    InputChip(selected = true, onClick = { vm.toggleApp(app) }, label = { Text(app.appName, maxLines = 1, overflow = TextOverflow.Ellipsis) }, trailingIcon = { Icon(Icons.Default.Close, null, modifier = Modifier.size(14.dp)) })
                                 }
-                            )
-                        }
-                    }
-
-                    OutlinedTextField(
-                        value = selectedApps.joinToString { it.appName },
-                        onValueChange = {},
-                        label = { Text(stringResource(R.string.selected_apps)) },
-                        readOnly = true,
-                        placeholder = { Text(stringResource(R.string.tap_to_select)) },
-                        trailingIcon = {
-                            IconButton(onClick = { showAppPicker = true }) {
-                                Icon(Icons.Default.Search, contentDescription = null)
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    if (selectedApps.isNotEmpty()) {
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            selectedApps.forEach { app ->
-                                InputChip(
-                                    selected = true,
-                                    onClick = { vm.toggleApp(app) },
-                                    label = {
-                                        Text(
-                                            app.appName,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    },
-                                    trailingIcon = {
-                                        Icon(
-                                            Icons.Default.Close,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                    }
-                                )
                             }
                         }
                     }
                 }
-            }
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                 ) {
-                    Text(
-                        text = stringResource(R.string.interval_settings),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value = seconds,
-                            onValueChange = { vm.updateSeconds(it) },
-                            label = { Text(stringResource(R.string.seconds)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-
-                        OutlinedTextField(
-                            value = milliseconds,
-                            onValueChange = { vm.updateMilliseconds(it) },
-                            label = { Text(stringResource(R.string.milliseconds)) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(stringResource(R.string.interval_settings), style = MaterialTheme.typography.titleMedium)
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                            OutlinedTextField(value = seconds, onValueChange = { vm.updateSeconds(it) }, label = { Text(stringResource(R.string.seconds)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
+                            OutlinedTextField(value = milliseconds, onValueChange = { vm.updateMilliseconds(it) }, label = { Text(stringResource(R.string.milliseconds)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
+                        }
+                        val totalMs = remember(seconds, milliseconds) { (seconds.toLongOrNull() ?: 0) * 1000 + (milliseconds.toLongOrNull() ?: 0) }
+                        Text(stringResource(R.string.total_interval, totalMs), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                }
 
-                    val totalMs = remember(seconds, milliseconds) {
-                        (seconds.toLongOrNull() ?: 0) * 1000 + (milliseconds.toLongOrNull() ?: 0)
-                    }
-                    Text(
-                        text = stringResource(R.string.total_interval, totalMs),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                if (isRunning || CrashLoopService.isServiceRunning) {
+                    CrashStatusCard()
                 }
             }
-
-            if (isRunning || CrashLoopService.isServiceRunning) {
-                CrashStatusCard()
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
 
             Button(
                 onClick = {
@@ -302,42 +203,21 @@ fun CrashLoopScreen(
                         if (selectedApps.isNotEmpty()) {
                             val totalMs = vm.getTotalMs()
                             if (totalMs > 0) {
-                                CrashLoopService.startMultiple(
-                                    context,
-                                    selectedApps.map { it.packageName },
-                                    totalMs,
-                                    stealth = stealthMode
-                                )
+                                CrashLoopService.startMultiple(context, selectedApps.map { it.packageName }, totalMs, stealth = stealthMode)
                                 vm.setRunning(true)
                             }
                         }
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isRunning) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    }
+                    containerColor = if (isRunning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                 ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp).align(Alignment.BottomCenter),
                 enabled = selectedApps.isNotEmpty()
             ) {
-                Icon(
-                    imageVector = if (isRunning) Icons.Default.Stop else Icons.Default.PlayArrow,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
+                Icon(imageVector = if (isRunning) Icons.Default.Stop else Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (isRunning) {
-                        stringResource(R.string.stop_crash_loop)
-                    } else {
-                        stringResource(R.string.start_crash_loop)
-                    }
-                )
+                Text(text = if (isRunning) stringResource(R.string.stop_crash_loop) else stringResource(R.string.start_crash_loop))
             }
         }
     }
@@ -351,10 +231,7 @@ fun CrashLoopScreen(
             onAppToggle = { vm.toggleApp(it) },
             onSelectAll = { vm.selectAll(filteredApps) },
             onDeselectAll = { vm.deselectAll() },
-            onDismiss = {
-                showAppPicker = false
-                vm.updateSearchQuery("")
-            }
+            onDismiss = { showAppPicker = false; vm.updateSearchQuery("") }
         )
     }
 }
@@ -376,215 +253,88 @@ private fun AppPickerDialog(
         title = {
             Column {
                 Text(stringResource(R.string.select_app))
-                Text(
-                    text = stringResource(R.string.selected_count, selectedApps.size),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text(stringResource(R.string.selected_count, selectedApps.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
         text = {
             Column {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = onSearchQueryChange,
-                    label = { Text(stringResource(R.string.search_app)) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
+                OutlinedTextField(value = searchQuery, onValueChange = onSearchQueryChange, label = { Text(stringResource(R.string.search_app)) }, leadingIcon = { Icon(Icons.Default.Search, null) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilledTonalButton(
-                        onClick = onSelectAll,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(R.string.select_all), style = MaterialTheme.typography.labelMedium)
-                    }
-                    FilledTonalButton(
-                        onClick = onDeselectAll,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(R.string.deselect_all), style = MaterialTheme.typography.labelMedium)
-                    }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(onClick = onSelectAll, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.select_all), style = MaterialTheme.typography.labelMedium) }
+                    FilledTonalButton(onClick = onDeselectAll, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.deselect_all), style = MaterialTheme.typography.labelMedium) }
                 }
-
                 Spacer(modifier = Modifier.height(8.dp))
-
-                LazyColumn(
-                    modifier = Modifier.heightIn(max = 400.dp)
-                ) {
-                    items(
-                        items = apps,
-                        key = { it.packageName }
-                    ) { app ->
-                        val isSelected = app in selectedApps
+                LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
+                    items(items = apps, key = { it.packageName }) { app ->
                         ListItem(
                             headlineContent = { Text(app.appName) },
-                            supportingContent = {
-                                Text(
-                                    app.packageName,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            },
-                            leadingContent = {
-                                Checkbox(
-                                    checked = isSelected,
-                                    onCheckedChange = { onAppToggle(app) }
-                                )
-                            },
-                            trailingContent = {
-                                Icon(
-                                    imageVector = if (app.isSystemApp) {
-                                        Icons.Default.Android
-                                    } else {
-                                        Icons.Default.Apps
-                                    },
-                                    contentDescription = null,
-                                    tint = if (app.isSystemApp) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth()
+                            supportingContent = { Text(app.packageName, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                            leadingContent = { Checkbox(checked = app in selectedApps, onCheckedChange = { onAppToggle(app) }) },
+                            trailingContent = { Icon(if (app.isSystemApp) Icons.Default.Android else Icons.Default.Apps, null, tint = if (app.isSystemApp) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) }
                         )
                     }
                 }
             }
         },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.confirm))
-            }
-        }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.confirm)) } }
     )
-}
-
-private fun checkNotificationPermission(context: Context): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.POST_NOTIFICATIONS
-        ) == PackageManager.PERMISSION_GRANTED
-    } else true
 }
 
 @Composable
 private fun CrashStatusCard() {
-    val serviceRunning by remember { mutableStateOf(CrashLoopService.isServiceRunning) }
-    val totalCount by remember { mutableStateOf(CrashLoopService.totalCrashCount) }
-    val log by remember { mutableStateOf(CrashLoopService.crashLog.toList()) }
+    var serviceRunning by remember { mutableStateOf(CrashLoopService.isServiceRunning) }
+    var totalCount by remember { mutableIntStateOf(CrashLoopService.totalCrashCount) }
+    var log by remember { mutableStateOf(CrashLoopService.crashLog.toList()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(500)
+            serviceRunning = CrashLoopService.isServiceRunning
+            totalCount = CrashLoopService.totalCrashCount
+            log = CrashLoopService.crashLog.toList()
+        }
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.Analytics,
-                        contentDescription = null,
-                        tint = if (serviceRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Icon(Icons.Default.Analytics, null, tint = if (serviceRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.crash_status),
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Text(stringResource(R.string.crash_status), style = MaterialTheme.typography.titleMedium)
                 }
-                Surface(
-                    shape = MaterialTheme.shapes.extraSmall,
-                    color = if (serviceRunning) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant
-                    }
-                ) {
-                    Text(
-                        text = if (serviceRunning) stringResource(R.string.running) else stringResource(R.string.stopped),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (serviceRunning) {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
+                Surface(shape = MaterialTheme.shapes.extraSmall, color = if (serviceRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant) {
+                    Text(if (serviceRunning) stringResource(R.string.running) else stringResource(R.string.stopped), modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = if (serviceRunning) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.total_crashes),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "$totalCount",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Text(stringResource(R.string.total_crashes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("$totalCount", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
                 }
             }
-
             if (log.isNotEmpty()) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Text(
-                    text = stringResource(R.string.recent_logs),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Text(stringResource(R.string.recent_logs), style = MaterialTheme.typography.titleSmall)
                 log.take(5).forEach { entry ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = entry.packageName.substringAfterLast('.'),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = entry.timestamp,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(entry.packageName.substringAfterLast('.'), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                        Text(entry.timestamp, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            imageVector = if (entry.success) Icons.Default.CheckCircle else Icons.Default.Error,
-                            contentDescription = null,
-                            tint = if (entry.success) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(14.dp)
-                        )
+                        Icon(if (entry.success) Icons.Default.CheckCircle else Icons.Default.Error, null, tint = if (entry.success) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error, modifier = Modifier.size(14.dp))
                     }
                 }
             }
         }
     }
+}
+
+private fun checkNotificationPermission(context: Context): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+    } else true
 }
