@@ -7,27 +7,33 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import github.boxiaolanya2008.kc_tool.manager.SettingsManager
 import github.boxiaolanya2008.kc_tool.shizuku.ShizukuManager
 import github.boxiaolanya2008.kc_tool.ui.components.ShizukuStatusCard
 import github.boxiaolanya2008.kc_tool.ui.screens.CrashLoopScreen
+import github.boxiaolanya2008.kc_tool.ui.screens.SettingsScreen
 import github.boxiaolanya2008.kc_tool.ui.theme.KctoolTheme
 
 class MainActivity : ComponentActivity() {
     private lateinit var shizukuManager: ShizukuManager
+    private lateinit var settingsManager: SettingsManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         shizukuManager = ShizukuManager()
         shizukuManager.initialize()
+        settingsManager = SettingsManager(applicationContext)
 
         setContent {
             KctoolTheme {
@@ -51,7 +57,8 @@ class MainActivity : ComponentActivity() {
                 MainApp(
                     isConnected = isConnected,
                     hasPermission = hasPermission,
-                    onRequestPermission = { shizukuManager.checkPermission() }
+                    onRequestPermission = { shizukuManager.checkPermission() },
+                    settingsManager = settingsManager
                 )
             }
         }
@@ -67,7 +74,8 @@ class MainActivity : ComponentActivity() {
 private fun MainApp(
     isConnected: Boolean,
     hasPermission: Boolean,
-    onRequestPermission: () -> Unit
+    onRequestPermission: () -> Unit,
+    settingsManager: SettingsManager
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -89,6 +97,12 @@ private fun MainApp(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 }
                 )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                    label = { Text(stringResource(R.string.nav_settings)) },
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 }
+                )
             }
         }
     ) { innerPadding ->
@@ -107,7 +121,14 @@ private fun MainApp(
                     onRequestPermission = onRequestPermission,
                     modifier = Modifier.padding(innerPadding)
                 )
-                1 -> CrashLoopScreen(modifier = Modifier.padding(innerPadding))
+                1 -> CrashLoopScreen(
+                    settingsManager = settingsManager,
+                    modifier = Modifier.padding(innerPadding)
+                )
+                2 -> SettingsScreen(
+                    settingsManager = settingsManager,
+                    modifier = Modifier.padding(innerPadding)
+                )
             }
         }
     }

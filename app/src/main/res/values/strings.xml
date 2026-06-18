@@ -40,7 +40,18 @@
     <string name="stop">停止</string>
     <string name="notification_permission_hint">需要通知权限以显示实时运行状态</string>
     <string name="grant">授权</string>
+    <string name="stealth_mode_active">隐身模式已开启，通知已隐藏</string>
+
+    <string name="settings_title">设置</string>
+    <string name="settings_general">通用</string>
+    <string name="settings_defaults">默认值</string>
+    <string name="settings_stealth_mode">隐身模式</string>
+    <string name="settings_stealth_mode_desc">隐藏后台通知，无感运行</string>
+    <string name="settings_auto_start">开机自启</string>
+    <string name="settings_auto_start_desc">设备启动后自动恢复服务</string>
+    <string name="settings_about">kc-tool v1.0 — 基于 Shizuku 的系统优化工具</string>
 
     <string name="nav_home">首页</string>
     <string name="nav_crash_loop">循环崩溃</string>
+    <string name="nav_settings">设置</string>
 </resources>

@@ -21,13 +21,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import github.boxiaolanya2008.kc_tool.R
+import github.boxiaolanya2008.kc_tool.manager.SettingsManager
 import github.boxiaolanya2008.kc_tool.service.CrashLoopService
-import github.boxiaolanya2008.kc_tool.ui.theme.KctoolTheme
 import github.boxiaolanya2008.kc_tool.viewmodel.CrashLoopViewModel
 
 data class AppInfo(
@@ -39,6 +38,7 @@ data class AppInfo(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CrashLoopScreen(
+    settingsManager: SettingsManager,
     modifier: Modifier = Modifier,
     vm: CrashLoopViewModel = viewModel()
 ) {
@@ -49,6 +49,7 @@ fun CrashLoopScreen(
     val seconds by vm.seconds.collectAsState()
     val milliseconds by vm.milliseconds.collectAsState()
     val isRunning by vm.isRunning.collectAsState()
+    val stealthMode by settingsManager.stealthMode.collectAsState()
     var showAppPicker by remember { mutableStateOf(false) }
     var hasNotificationPermission by remember {
         mutableStateOf(checkNotificationPermission(context))
@@ -120,6 +121,33 @@ fun CrashLoopScreen(
                         ) {
                             Text(stringResource(R.string.grant))
                         }
+                    }
+                }
+            }
+
+            if (stealthMode) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.VisibilityOff,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.stealth_mode_active),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
                     }
                 }
             }
@@ -269,7 +297,8 @@ fun CrashLoopScreen(
                                 CrashLoopService.startMultiple(
                                     context,
                                     selectedApps.map { it.packageName },
-                                    totalMs
+                                    totalMs,
+                                    stealth = stealthMode
                                 )
                                 vm.setRunning(true)
                             }
@@ -440,12 +469,4 @@ private fun checkNotificationPermission(context: Context): Boolean {
             Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED
     } else true
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun CrashLoopScreenPreview() {
-    KctoolTheme {
-        CrashLoopScreen()
-    }
 }
