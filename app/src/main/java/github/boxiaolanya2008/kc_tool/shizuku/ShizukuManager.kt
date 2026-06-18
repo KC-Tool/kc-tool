@@ -15,43 +15,49 @@ class ShizukuManager {
 
     private var userService: IShizukuUserService? = null
     private var isBound = false
+    var onStateChanged: (() -> Unit)? = null
 
     private val userServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             Log.d(TAG, "UserService connected")
             userService = IShizukuUserService.Stub.asInterface(binder)
             isBound = true
+            onStateChanged?.invoke()
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
             Log.d(TAG, "UserService disconnected")
             userService = null
             isBound = false
+            onStateChanged?.invoke()
         }
     }
 
-    private val shizukuAliveListener = Shizuku.OnBinderReceivedListener {
+    private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
         Log.d(TAG, "Shizuku binder received")
         checkPermission()
+        onStateChanged?.invoke()
     }
 
-    private val shizukuDeadListener = Shizuku.OnBinderDeadListener {
+    private val binderDeadListener = Shizuku.OnBinderDeadListener {
         Log.d(TAG, "Shizuku binder dead")
         userService = null
         isBound = false
+        onStateChanged?.invoke()
     }
 
     private val permissionResultListener =
-        Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
+        Shizuku.OnRequestPermissionResultListener { _, grantResult ->
             Log.d(TAG, "Permission result: $grantResult")
+            onStateChanged?.invoke()
             if (grantResult == PackageManager.PERMISSION_GRANTED) {
                 bindUserService()
             }
         }
 
     fun initialize() {
-        Shizuku.addBinderReceivedListener(shizukuAliveListener)
-        Shizuku.addBinderDeadListener(shizukuDeadListener)
+        Shizuku.addBinderReceivedListener(binderReceivedListener)
+        Shizuku.addBinderDeadListener(binderDeadListener)
         Shizuku.addRequestPermissionResultListener(permissionResultListener)
 
         if (Shizuku.pingBinder()) {
@@ -60,8 +66,8 @@ class ShizukuManager {
     }
 
     fun destroy() {
-        Shizuku.removeBinderReceivedListener(shizukuAliveListener)
-        Shizuku.removeBinderDeadListener(shizukuDeadListener)
+        Shizuku.removeBinderReceivedListener(binderReceivedListener)
+        Shizuku.removeBinderDeadListener(binderDeadListener)
         Shizuku.removeRequestPermissionResultListener(permissionResultListener)
         unbindUserService()
     }

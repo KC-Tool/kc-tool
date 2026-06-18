@@ -31,7 +31,28 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             KctoolTheme {
-                MainApp(shizukuManager = shizukuManager)
+                var refreshVersion by remember { mutableIntStateOf(0) }
+
+                LaunchedEffect(Unit) {
+                    shizukuManager.onStateChanged = { refreshVersion++ }
+                }
+
+                DisposableEffect(Unit) {
+                    onDispose { shizukuManager.onStateChanged = null }
+                }
+
+                val isConnected by remember(refreshVersion) {
+                    mutableStateOf(shizukuManager.isConnected())
+                }
+                val hasPermission by remember(refreshVersion) {
+                    mutableStateOf(shizukuManager.hasPermission())
+                }
+
+                MainApp(
+                    isConnected = isConnected,
+                    hasPermission = hasPermission,
+                    onRequestPermission = { shizukuManager.checkPermission() }
+                )
             }
         }
     }
@@ -43,16 +64,12 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun MainApp(shizukuManager: ShizukuManager) {
+private fun MainApp(
+    isConnected: Boolean,
+    hasPermission: Boolean,
+    onRequestPermission: () -> Unit
+) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    var refreshVersion by remember { mutableIntStateOf(0) }
-
-    val isConnected by remember(refreshVersion) {
-        mutableStateOf(shizukuManager.isConnected())
-    }
-    val hasPermission by remember(refreshVersion) {
-        mutableStateOf(shizukuManager.hasPermission())
-    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -87,10 +104,7 @@ private fun MainApp(shizukuManager: ShizukuManager) {
                 0 -> HomeScreen(
                     isConnected = isConnected,
                     hasPermission = hasPermission,
-                    onRequestPermission = {
-                        shizukuManager.checkPermission()
-                        refreshVersion++
-                    },
+                    onRequestPermission = onRequestPermission,
                     modifier = Modifier.padding(innerPadding)
                 )
                 1 -> CrashLoopScreen(modifier = Modifier.padding(innerPadding))
