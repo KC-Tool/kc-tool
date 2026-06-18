@@ -13,9 +13,6 @@ import androidx.core.app.NotificationCompat
 import github.boxiaolanya2008.kc_tool.MainActivity
 import github.boxiaolanya2008.kc_tool.R
 import rikka.shizuku.Shizuku
-import java.io.DataOutputStream
-import java.text.SimpleDateFormat
-import java.util.*
 import kotlinx.coroutines.*
 
 class CrashLoopService : Service() {
@@ -29,14 +26,6 @@ class CrashLoopService : Service() {
         private const val EXTRA_PACKAGE_NAMES = "package_names"
         private const val EXTRA_INTERVAL_MS = "interval_ms"
         private const val EXTRA_STEALTH = "stealth"
-
-        val crashLog = mutableListOf<CrashLogEntry>()
-        var isServiceRunning = false
-            private set
-        var totalCrashCount = 0
-            private set
-        var currentTargetPackages = emptyList<String>()
-            private set
 
         fun start(context: Context, packageName: String, intervalMs: Long, stealth: Boolean = false) {
             val intent = Intent(context, CrashLoopService::class.java).apply {
@@ -59,19 +48,13 @@ class CrashLoopService : Service() {
         fun stop(context: Context) {
             context.stopService(Intent(context, CrashLoopService::class.java))
         }
-
-        fun clearLog() {
-            crashLog.clear()
-        }
     }
 
     private var serviceJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private var crashCount = 0
     private var currentPackages = emptyList<String>()
     private var currentIntervalMs = 0L
     private var isStealth = false
-    private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -87,18 +70,21 @@ class CrashLoopService : Service() {
         }
 
         val packages = intent?.getStringArrayExtra(EXTRA_PACKAGE_NAMES)?.toList() ?: run {
+            Log.e(TAG, "No packages in intent, stopping")
             stopSelf()
             return START_NOT_STICKY
         }
         val intervalMs = intent.getLongExtra(EXTRA_INTERVAL_MS, 1000L)
         isStealth = intent.getBooleanExtra(EXTRA_STEALTH, false)
 
+        Log.d(TAG, "onStartCommand: packages=$packages, interval=${intervalMs}ms, stealth=$isStealth")
+
         currentPackages = packages
         currentIntervalMs = intervalMs
-        crashCount = 0
 
-        isServiceRunning = true
-        currentTargetPackages = packages
+        CrashLoopState.setRunning(true)
+        CrashLoopState.setTargets(packages)
+        CrashLoopState.resetCount()
 
         startForeground(NOTIFICATION_ID, buildNotification())
 
@@ -117,7 +103,7 @@ class CrashLoopService : Service() {
     override fun onDestroy() {
         serviceJob?.cancel()
         scope.cancel()
-        isServiceRunning = false
+        CrashLoopState.setRunning(false)
         super.onDestroy()
     }
 
@@ -125,33 +111,13 @@ class CrashLoopService : Service() {
         while (true) {
             for (pkg in packages) {
                 try {
-                    Log.d(TAG, "Crashing $pkg via Shizuku...")
+                    Log.d(TAG, ">>> Crashing $pkg ...")
                     val output = execCommand("dumpsys activity crash $pkg")
-                    crashCount++
-                    totalCrashCount++
-                    val entry = CrashLogEntry(
-                        packageName = pkg,
-                        timestamp = timeFormat.format(Date()),
-                        success = true
-                    )
-                    synchronized(crashLog) {
-                        crashLog.add(0, entry)
-                        if (crashLog.size > 100) crashLog.removeAt(100)
-                    }
-                    Log.d(TAG, "Crashed $pkg #$crashCount output=${output.take(100)}")
+                    CrashLoopState.incrementCrash(pkg)
+                    Log.d(TAG, "<<< OK: $pkg output=${output.take(200)}")
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to crash $pkg", e)
-                    crashCount++
-                    totalCrashCount++
-                    val entry = CrashLogEntry(
-                        packageName = pkg,
-                        timestamp = timeFormat.format(Date()),
-                        success = false
-                    )
-                    synchronized(crashLog) {
-                        crashLog.add(0, entry)
-                        if (crashLog.size > 100) crashLog.removeAt(100)
-                    }
+                    Log.e(TAG, "<<< FAIL: $pkg", e)
+                    CrashLoopState.failCrash(pkg)
                 }
             }
             updateNotification()
@@ -160,14 +126,22 @@ class CrashLoopService : Service() {
     }
 
     private fun execCommand(command: String): String {
-        val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
+        Log.d(TAG, "execCommand: $command")
+        try {
+            val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
+            Log.d(TAG, "process created, pid=${process.hashCode()}")
 
-        val output = process.inputStream.bufferedReader().readText()
-        val error = process.errorStream.bufferedReader().readText()
-        process.waitFor()
+            val output = process.inputStream.bufferedReader().readText()
+            val error = process.errorStream.bufferedReader().readText()
+            val exitCode = process.waitFor()
 
-        if (error.isNotEmpty()) Log.w(TAG, "stderr: ${error.take(200)}")
-        return output.ifEmpty { error }
+            Log.d(TAG, "exitCode=$exitCode, output=${output.take(200)}, error=${error.take(200)}")
+            if (error.isNotEmpty()) Log.w(TAG, "stderr: ${error.take(200)}")
+            return output.ifEmpty { error }
+        } catch (e: Exception) {
+            Log.e(TAG, "execCommand failed: $command", e)
+            throw e
+        }
     }
 
     private fun createNotificationChannels() {
@@ -217,6 +191,7 @@ class CrashLoopService : Service() {
         )
 
         val channelId = if (isStealth) CHANNEL_ID_STEALTH else CHANNEL_ID
+        val count = CrashLoopState.crashCount.value
 
         val pkgText = if (currentPackages.size > 2) {
             "${currentPackages.take(2).joinToString()} +${currentPackages.size - 2}"
@@ -228,7 +203,7 @@ class CrashLoopService : Service() {
             .setContentTitle(getString(R.string.crash_loop_running))
             .setContentText(
                 "${getString(R.string.target)}: $pkgText | " +
-                        "${getString(R.string.crash_count)}: $crashCount | " +
+                        "${getString(R.string.crash_count)}: $count | " +
                         "${currentIntervalMs}ms"
             )
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
@@ -244,7 +219,7 @@ class CrashLoopService : Service() {
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setStyle(NotificationCompat.BigTextStyle().bigText(
                 "${getString(R.string.target)}: $pkgText\n" +
-                        "${getString(R.string.crash_count)}: $crashCount\n" +
+                        "${getString(R.string.crash_count)}: $count\n" +
                         "${getString(R.string.interval)}: ${currentIntervalMs}ms"
             ))
             .build()
@@ -264,9 +239,3 @@ class CrashLoopService : Service() {
         manager.notify(NOTIFICATION_ID, buildNotification())
     }
 }
-
-data class CrashLogEntry(
-    val packageName: String,
-    val timestamp: String,
-    val success: Boolean
-)

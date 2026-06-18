@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -30,6 +31,7 @@ import github.boxiaolanya2008.kc_tool.R
 import github.boxiaolanya2008.kc_tool.manager.NotificationHelper
 import github.boxiaolanya2008.kc_tool.manager.SettingsManager
 import github.boxiaolanya2008.kc_tool.service.CrashLoopService
+import github.boxiaolanya2008.kc_tool.service.CrashLoopState
 import github.boxiaolanya2008.kc_tool.viewmodel.CrashLoopViewModel
 
 data class AppInfo(
@@ -38,7 +40,7 @@ data class AppInfo(
     val isSystemApp: Boolean
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CrashLoopScreen(
     settingsManager: SettingsManager,
@@ -185,7 +187,7 @@ fun CrashLoopScreen(
                     }
                 }
 
-                if (isRunning || CrashLoopService.isServiceRunning) {
+                if (isRunning || CrashLoopState.isRunning.collectAsState().value) {
                     CrashStatusCard()
                 }
             }
@@ -283,18 +285,9 @@ private fun AppPickerDialog(
 
 @Composable
 private fun CrashStatusCard() {
-    var serviceRunning by remember { mutableStateOf(CrashLoopService.isServiceRunning) }
-    var totalCount by remember { mutableIntStateOf(CrashLoopService.totalCrashCount) }
-    var log by remember { mutableStateOf(CrashLoopService.crashLog.toList()) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            kotlinx.coroutines.delay(500)
-            serviceRunning = CrashLoopService.isServiceRunning
-            totalCount = CrashLoopService.totalCrashCount
-            log = CrashLoopService.crashLog.toList()
-        }
-    }
+    val serviceRunning by CrashLoopState.isRunning.collectAsState()
+    val totalCount by CrashLoopState.totalCrashCount.collectAsState()
+    val logs by CrashLoopState.logs.collectAsState()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -317,10 +310,10 @@ private fun CrashStatusCard() {
                     Text("$totalCount", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
                 }
             }
-            if (log.isNotEmpty()) {
+            if (logs.isNotEmpty()) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Text(stringResource(R.string.recent_logs), style = MaterialTheme.typography.titleSmall)
-                log.take(5).forEach { entry ->
+                logs.take(5).forEach { entry ->
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(entry.packageName.substringAfterLast('.'), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                         Text(entry.timestamp, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
