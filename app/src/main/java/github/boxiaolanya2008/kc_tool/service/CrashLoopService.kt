@@ -141,9 +141,12 @@ class CrashLoopService : Service() {
         val channel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.crash_loop_channel_name),
-            NotificationManager.IMPORTANCE_LOW
+            NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
             description = getString(R.string.crash_loop_channel_desc)
+            enableLights(true)
+            enableVibration(true)
+            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }
         manager.createNotificationChannel(channel)
 
@@ -157,6 +160,7 @@ class CrashLoopService : Service() {
             enableLights(false)
             enableVibration(false)
             setSound(null, null)
+            lockscreenVisibility = Notification.VISIBILITY_SECRET
         }
         manager.createNotificationChannel(stealthChannel)
     }
@@ -196,7 +200,9 @@ class CrashLoopService : Service() {
             .addAction(android.R.drawable.ic_media_pause, getString(R.string.stop), stopPendingIntent)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .setPriority(if (isStealth) NotificationCompat.PRIORITY_MIN else NotificationCompat.PRIORITY_LOW)
+            .setPriority(if (isStealth) NotificationCompat.PRIORITY_MIN else NotificationCompat.PRIORITY_DEFAULT)
+            .setVisibility(if (isStealth) NotificationCompat.VISIBILITY_SECRET else NotificationCompat.VISIBILITY_PUBLIC)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
     }
 

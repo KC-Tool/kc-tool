@@ -35,11 +35,9 @@ fun ShizukuStatusCard(
         label = "statusColor"
     )
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+    HdrGlowBox(
+        color = statusColor,
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -81,7 +79,7 @@ fun ShizukuStatusCard(
                 }
             }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HdrDivider()
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
