@@ -1,3 +1,34 @@
 <resources>
     <string name="app_name">kc-tool</string>
+    <string name="shizuku_status">Shizuku Status</string>
+    <string name="shizuku_connected">Shizuku Connected</string>
+    <string name="shizuku_disconnected">Shizuku Disconnected</string>
+    <string name="permission_granted">Permission Granted</string>
+    <string name="permission_required">Permission Required</string>
+    <string name="request_permission">Request Permission</string>
+
+    <string name="crash_loop_title">Loop Crash System App</string>
+    <string name="target_app">Target App</string>
+    <string name="selected_app">Selected App</string>
+    <string name="interval_settings">Interval Settings</string>
+    <string name="seconds">Seconds</string>
+    <string name="milliseconds">Milliseconds</string>
+    <string name="total_interval">Total: %d ms</string>
+    <string name="start_crash_loop">Start Loop</string>
+    <string name="stop_crash_loop">Stop Loop</string>
+    <string name="select_app">Select App</string>
+    <string name="search_app">Search app name or package…</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="crash_loop_channel_name">Crash Loop Service</string>
+    <string name="crash_loop_channel_desc">Notification for crash loop service</string>
+    <string name="crash_loop_running">Crash loop running</string>
+    <string name="target">Target</string>
+    <string name="crash_count">Crashes</string>
+    <string name="stop">Stop</string>
+    <string name="notification_permission_hint">Notification permission required for real-time status</string>
+    <string name="grant">Grant</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_crash_loop">Crash Loop</string>
 </resources>
