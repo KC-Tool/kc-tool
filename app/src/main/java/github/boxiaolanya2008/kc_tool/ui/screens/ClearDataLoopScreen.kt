@@ -6,19 +6,72 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material.icons.filled.Android
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -36,18 +89,11 @@ import github.boxiaolanya2008.kc_tool.service.CrashLoopState
 import github.boxiaolanya2008.kc_tool.service.LoopOperationMode
 import github.boxiaolanya2008.kc_tool.viewmodel.CrashLoopViewModel
 
-data class AppInfo(
-    val packageName: String,
-    val appName: String,
-    val isSystemApp: Boolean
-)
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun CrashLoopScreen(
+fun ClearDataLoopScreen(
     settingsManager: SettingsManager,
     modifier: Modifier = Modifier,
-    onBack: () -> Unit,
     vm: CrashLoopViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -60,9 +106,7 @@ fun CrashLoopScreen(
     val stealthMode by settingsManager.stealthMode.collectAsState()
     val noNotificationMode by settingsManager.noNotificationMode.collectAsState()
     var showAppPicker by remember { mutableStateOf(false) }
-    var hasNotificationPermission by remember {
-        mutableStateOf(checkNotificationPermission(context))
-    }
+    var hasNotificationPermission by remember { mutableStateOf(checkNotificationPermission(context)) }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -72,45 +116,15 @@ fun CrashLoopScreen(
     }
 
     val filteredApps = remember(apps, searchQuery) {
-        if (searchQuery.isBlank()) apps
-        else apps.filter {
-            it.appName.contains(searchQuery, ignoreCase = true) ||
-                    it.packageName.contains(searchQuery, ignoreCase = true)
+        if (searchQuery.isBlank()) apps else apps.filter {
+            it.appName.contains(searchQuery, ignoreCase = true) || it.packageName.contains(searchQuery, ignoreCase = true)
         }
-    }
-
-    var clearMode by rememberSaveable { mutableStateOf(false) }
-    var runBoth by rememberSaveable { mutableStateOf(false) }
-    val currentMode = when {
-        runBoth -> LoopOperationMode.BOTH
-        clearMode -> LoopOperationMode.CLEAR_DATA
-        else -> LoopOperationMode.CRASH
-    }
-    val titleText = when (currentMode) {
-        LoopOperationMode.BOTH -> stringResource(R.string.loop_both_title)
-        LoopOperationMode.CLEAR_DATA -> stringResource(R.string.clear_data_loop_title)
-        else -> stringResource(R.string.crash_loop_title)
-    }
-    val subtitleText = when (currentMode) {
-        LoopOperationMode.BOTH -> stringResource(R.string.loop_both_subtitle)
-        LoopOperationMode.CLEAR_DATA -> stringResource(R.string.clear_data_loop_subtitle)
-        else -> stringResource(R.string.crash_loop_subtitle)
-    }
-    val modeHintText = when (currentMode) {
-        LoopOperationMode.BOTH -> stringResource(R.string.loop_both_mode_hint)
-        LoopOperationMode.CLEAR_DATA -> stringResource(R.string.clear_data_mode_hint)
-        else -> stringResource(R.string.crash_mode_hint)
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(titleText) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Home, contentDescription = null)
-                    }
-                },
+                title = { Text(stringResource(R.string.clear_data_loop_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -127,9 +141,22 @@ fun CrashLoopScreen(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = 80.dp),
+                    .padding(bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(R.string.clear_data_loop_subtitle), style = MaterialTheme.typography.bodyMedium)
+                        }
+                        Text(stringResource(R.string.clear_data_loop_command_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
                 AnimatedVisibility(
                     visible = !hasNotificationPermission,
                     enter = fadeIn() + expandVertically(),
@@ -154,35 +181,6 @@ fun CrashLoopScreen(
                             FilledTonalButton(onClick = { notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) }) {
                                 Text(stringResource(R.string.grant))
                             }
-                        }
-                    }
-                }
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(stringResource(R.string.loop_mode_title), style = MaterialTheme.typography.titleMedium)
-                        Text(subtitleText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(modeHintText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(stringResource(R.string.clear_mode_label), style = MaterialTheme.typography.bodyMedium)
-                            Switch(checked = clearMode, onCheckedChange = { clearMode = it }, enabled = !runBoth)
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(stringResource(R.string.run_both_label), style = MaterialTheme.typography.bodyMedium)
-                            Switch(checked = runBoth, onCheckedChange = { runBoth = it })
                         }
                     }
                 }
@@ -248,10 +246,8 @@ fun CrashLoopScreen(
                     }
                 }
 
-                DiagnosticCard()
-
                 if (isRunning || CrashLoopState.isRunning.collectAsState().value) {
-                    CrashStatusCard()
+                    ClearDataStatusCard()
                 }
             }
 
@@ -274,9 +270,9 @@ fun CrashLoopScreen(
                                 var totalMs = vm.getTotalMs()
                                 if (totalMs <= 0) totalMs = 500L
                                 if (noNotificationMode) {
-                                    vm.startNoNotificationLoop(selectedApps.map { it.packageName }, totalMs, currentMode)
+                                    vm.startNoNotificationLoop(selectedApps.map { it.packageName }, totalMs, LoopOperationMode.CLEAR_DATA)
                                 } else {
-                                    val ok = CrashLoopService.startMultiple(context, selectedApps.map { it.packageName }, totalMs, stealth = stealthMode, operationMode = currentMode)
+                                    val ok = CrashLoopService.startMultiple(context, selectedApps.map { it.packageName }, totalMs, stealth = stealthMode, operationMode = LoopOperationMode.CLEAR_DATA)
                                     if (ok) vm.setRunning(true)
                                 }
                             }
@@ -293,13 +289,7 @@ fun CrashLoopScreen(
             ) {
                 Icon(imageVector = if (isRunning) Icons.Default.Stop else Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = if (isRunning) stringResource(R.string.stop_loop) else stringResource(
-                    when {
-                        runBoth -> R.string.start_both_loop
-                        clearMode -> R.string.start_clear_data_loop
-                        else -> R.string.start_crash_loop
-                    }
-                ))
+                Text(text = if (isRunning) stringResource(R.string.stop_clear_data_loop) else stringResource(R.string.start_clear_data_loop))
             }
         }
     }
@@ -318,53 +308,8 @@ fun CrashLoopScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppPickerDialog(
-    apps: List<AppInfo>,
-    selectedApps: Set<AppInfo>,
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    onAppToggle: (AppInfo) -> Unit,
-    onSelectAll: () -> Unit,
-    onDeselectAll: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Column {
-                Text(stringResource(R.string.select_app))
-                Text(stringResource(R.string.selected_count, selectedApps.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        },
-        text = {
-            Column {
-                OutlinedTextField(value = searchQuery, onValueChange = onSearchQueryChange, label = { Text(stringResource(R.string.search_app)) }, leadingIcon = { Icon(Icons.Default.Search, null) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilledTonalButton(onClick = onSelectAll, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.select_all), style = MaterialTheme.typography.labelMedium) }
-                    FilledTonalButton(onClick = onDeselectAll, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.deselect_all), style = MaterialTheme.typography.labelMedium) }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
-                    items(items = apps, key = { it.packageName }) { app ->
-                        ListItem(
-                            headlineContent = { Text(app.appName) },
-                            supportingContent = { Text(app.packageName, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                            leadingContent = { Checkbox(checked = app in selectedApps, onCheckedChange = { onAppToggle(app) }) },
-                            trailingContent = { Icon(if (app.isSystemApp) Icons.Default.Android else Icons.Default.Apps, null, tint = if (app.isSystemApp) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) }
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.confirm)) } }
-    )
-}
-
-@Composable
-private fun CrashStatusCard() {
+private fun ClearDataStatusCard() {
     val serviceRunning by CrashLoopState.isRunning.collectAsState()
     val totalCount by CrashLoopState.totalCrashCount.collectAsState()
     val logs by CrashLoopState.logs.collectAsState()
@@ -377,9 +322,9 @@ private fun CrashStatusCard() {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Analytics, null, tint = if (serviceRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.DeleteSweep, null, tint = if (serviceRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.crash_status), style = MaterialTheme.typography.titleMedium)
+                    Text("清理状态", style = MaterialTheme.typography.titleMedium)
                 }
                 Surface(shape = MaterialTheme.shapes.extraSmall, color = if (serviceRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant) {
                     Text(if (serviceRunning) stringResource(R.string.running) else stringResource(R.string.stopped), modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = if (serviceRunning) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
@@ -387,21 +332,15 @@ private fun CrashStatusCard() {
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.total_crashes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("执行次数", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("$totalCount", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
                 }
             }
             if (logs.isNotEmpty()) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.recent_logs), style = MaterialTheme.typography.titleSmall)
-                    TextButton(onClick = { showLogDialog = true }) { Text("查看输出") }
-                }
                 logs.take(5).forEach { entry ->
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(entry.packageName.substringAfterLast('.'), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                        Text(entry.operationMode.name, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(entry.timestamp, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(if (entry.success) Icons.Default.CheckCircle else Icons.Default.Error, null, tint = if (entry.success) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error, modifier = Modifier.size(14.dp))
@@ -417,52 +356,6 @@ private fun CrashStatusCard() {
                     }
                 }
             }
-        }
-    }
-
-    if (showLogDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogDialog = false },
-            title = { Text("命令输出") },
-            text = {
-                val text = logs.take(20).joinToString("\n\n") { entry ->
-                    val status = if (entry.success) "OK" else "FAIL"
-                    "[$status] ${entry.timestamp} ${entry.packageName}\n${entry.output.ifEmpty { "(无输出)" }}"
-                }
-                Column(modifier = Modifier.heightIn(max = 400.dp)) {
-                    Text(
-                        text,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.verticalScroll(rememberScrollState())
-                    )
-                }
-            },
-            confirmButton = { TextButton(onClick = { showLogDialog = false }) { Text("关闭") } }
-        )
-    }
-}
-
-@Composable
-private fun DiagnosticCard() {
-    val diag by CrashLoopState.diagnostic.collectAsState()
-    if (diag.isEmpty()) return
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest)
-    ) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Terminal, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("诊断输出", style = MaterialTheme.typography.titleSmall)
-            }
-            Text(
-                diag,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.heightIn(max = 200.dp).verticalScroll(rememberScrollState())
-            )
         }
     }
 }

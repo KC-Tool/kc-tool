@@ -32,24 +32,26 @@ object CrashLoopState {
         _targetPackages.value = packages
     }
 
-    fun incrementCrash(packageName: String, output: String = "") {
+    fun incrementCrash(packageName: String, operationMode: LoopOperationMode, output: String = "") {
         _crashCount.value++
         _totalCrashCount.value++
         val entry = CrashLogEntry(
             packageName = packageName,
             timestamp = timeFormat.format(Date()),
+            operationMode = operationMode,
             success = true,
             output = output
         )
         _logs.value = listOf(entry) + _logs.value.take(99)
     }
 
-    fun failCrash(packageName: String, output: String = "") {
+    fun failCrash(packageName: String, operationMode: LoopOperationMode, output: String = "") {
         _crashCount.value++
         _totalCrashCount.value++
         val entry = CrashLogEntry(
             packageName = packageName,
             timestamp = timeFormat.format(Date()),
+            operationMode = operationMode,
             success = false,
             output = output
         )
@@ -80,6 +82,7 @@ object CrashLoopState {
 data class CrashLogEntry(
     val packageName: String,
     val timestamp: String,
+    val operationMode: LoopOperationMode,
     val success: Boolean,
     val output: String = ""
 )

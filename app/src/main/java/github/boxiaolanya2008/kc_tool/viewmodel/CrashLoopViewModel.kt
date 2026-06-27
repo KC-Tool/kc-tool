@@ -8,6 +8,8 @@ import android.util.Log
 import github.boxiaolanya2008.kc_tool.manager.LogManager
 import github.boxiaolanya2008.kc_tool.manager.SettingsManager
 import github.boxiaolanya2008.kc_tool.service.CrashLoopState
+import github.boxiaolanya2008.kc_tool.service.LoopOperationMode
+import github.boxiaolanya2008.kc_tool.service.buildLoopCommand
 import github.boxiaolanya2008.kc_tool.ui.screens.AppInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -117,7 +119,7 @@ class CrashLoopViewModel(application: Application) : AndroidViewModel(applicatio
                 (_milliseconds.value.toLongOrNull() ?: 0)
     }
 
-    fun startNoNotificationLoop(packages: List<String>, intervalMs: Long) {
+    fun startNoNotificationLoop(packages: List<String>, intervalMs: Long, operationMode: LoopOperationMode = LoopOperationMode.CRASH) {
         if (loopJob?.isActive == true) return
         _isRunning.value = true
         CrashLoopState.setRunning(true)
@@ -125,15 +127,15 @@ class CrashLoopViewModel(application: Application) : AndroidViewModel(applicatio
         CrashLoopState.resetCount()
         val logMgr = LogManager.get(getApplication())
         loopJob = viewModelScope.launch(Dispatchers.IO) {
-            logMgr.write("CrashLoopVM", "no-notification loop started pkgs=${packages.size}")
+            logMgr.write("CrashLoopVM", "no-notification loop started pkgs=${packages.size} mode=$operationMode")
             while (true) {
                 for (pkg in packages) {
                     try {
-                        val output = execCommandNoService("am crash $pkg")
-                        CrashLoopState.incrementCrash(pkg, output)
+                        val output = execCommandNoService(buildLoopCommand(pkg, operationMode))
+                        CrashLoopState.incrementCrash(pkg, operationMode, output)
                         logMgr.write("CrashLoopVM", "OK $pkg")
                     } catch (e: Exception) {
-                        CrashLoopState.failCrash(pkg, e.message ?: "")
+                        CrashLoopState.failCrash(pkg, operationMode, e.message ?: "")
                         logMgr.write("CrashLoopVM", "FAIL $pkg: ${e.message}", isError = true)
                     }
                 }

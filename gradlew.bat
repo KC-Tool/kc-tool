@@ -55,7 +55,7 @@ goto fail
 
 :findJavaFromJavaHome
 set JAVA_HOME=%JAVA_HOME:"=%
-set JAVA_EXE=%JAVA_HOME%/bin/java.exe
+set JAVA_EXE=D:\JDK21\jdk-21.0.9+10\bin\java.exe
 
 if exist "%JAVA_EXE%" goto execute
 
@@ -92,3 +92,4 @@ exit /b %EXIT_CODE%
 if "%OS%"=="Windows_NT" endlocal
 
 :omega
+

@@ -13,8 +13,37 @@
     <string name="home_subtitle">系统优化工具箱</string>
     <string name="home_tips_title">使用提示</string>
     <string name="home_tips_content">请确保已安装并启动 Shizuku，且已授予本应用 Shizuku 权限。</string>
+    <string name="toolbox_title">工具箱控制台</string>
+    <string name="toolbox_subtitle">选择一项系统级操作，快速执行并查看结果</string>
+    <string name="toolbox_panel_title">工具执行面板</string>
+    <string name="toolbox_panel_desc">这里汇总了多种系统级操作，适合高级调试、排障和维护场景。</string>
+    <string name="tool_crash_loop">循环崩溃应用</string>
+    <string name="tool_crash_loop_desc">反复触发指定应用崩溃，适合压力测试与异常验证</string>
+    <string name="tool_clear_data">循环清理应用数据</string>
+    <string name="tool_clear_data_desc">反复执行 pm clear &lt;package_name&gt;，清理应用数据</string>
+    <string name="tool_loop_tool">循环工具</string>
+    <string name="tool_loop_tool_desc">在同一页里切换循环崩溃和清理模式，并显示日志输出</string>
 
     <string name="crash_loop_title">循环崩溃应用</string>
+    <string name="crash_loop_subtitle">反复执行 am crash &lt;package_name&gt;，适合异常验证与压力测试</string>
+    <string name="crash_loop_command_hint">当前命令：am crash &lt;package_name&gt;</string>
+    <string name="clear_data_loop_title">循环清理应用数据</string>
+    <string name="clear_data_loop_subtitle">反复执行清理操作，适合清空数据后复测</string>
+    <string name="clear_data_loop_command_hint">当前模式：清理数据</string>
+    <string name="start_clear_data_loop">开始清理循环</string>
+    <string name="stop_clear_data_loop">停止清理循环</string>
+    <string name="start_loop">开始循环</string>
+    <string name="start_both_loop">开始清理+崩溃循环</string>
+    <string name="stop_loop">停止循环</string>
+    <string name="loop_mode_title">运行模式</string>
+    <string name="clear_mode_label">仅清理</string>
+    <string name="run_both_label">同时运行清理与崩溃</string>
+    <string name="crash_mode_hint">当前模式：崩溃</string>
+    <string name="clear_data_mode_hint">当前模式：清理</string>
+    <string name="loop_both_mode_hint">当前模式：清理 + 崩溃</string>
+    <string name="loop_both_title">循环清理+崩溃</string>
+    <string name="loop_both_subtitle">对目标应用执行清理与崩溃操作，适合双模式压力测试</string>
+    <string name="command_hidden">命令文本已隐藏，仅展示结果日志</string>
     <string name="target_app">目标应用</string>
     <string name="selected_apps">已选应用</string>
     <string name="tap_to_select">点击选择应用</string>
@@ -61,6 +90,6 @@
     <string name="interval">间隔</string>
 
     <string name="nav_home">首页</string>
-    <string name="nav_crash_loop">循环崩溃</string>
+    <string name="nav_loop_tool">循环工具</string>
     <string name="nav_settings">设置</string>
 </resources>

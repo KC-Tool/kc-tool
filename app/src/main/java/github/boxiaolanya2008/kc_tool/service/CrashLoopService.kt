@@ -16,6 +16,18 @@ import github.boxiaolanya2008.kc_tool.manager.LogManager
 import rikka.shizuku.Shizuku
 import kotlinx.coroutines.*
 
+enum class LoopOperationMode {
+    CRASH,
+    CLEAR_DATA,
+    BOTH
+}
+
+fun buildLoopCommand(packageName: String, mode: LoopOperationMode): String = when (mode) {
+    LoopOperationMode.CRASH -> "am crash $packageName"
+    LoopOperationMode.CLEAR_DATA -> "pm clear $packageName"
+    LoopOperationMode.BOTH -> "pm clear $packageName; am crash $packageName"
+}
+
 class CrashLoopService : Service() {
     companion object {
         private const val TAG = "CrashLoopService"
@@ -27,21 +39,24 @@ class CrashLoopService : Service() {
         private const val EXTRA_PACKAGE_NAMES = "package_names"
         private const val EXTRA_INTERVAL_MS = "interval_ms"
         private const val EXTRA_STEALTH = "stealth"
+        private const val EXTRA_OPERATION_MODE = "operation_mode"
 
-        fun start(context: Context, packageName: String, intervalMs: Long, stealth: Boolean = false) {
+        fun start(context: Context, packageName: String, intervalMs: Long, stealth: Boolean = false, operationMode: LoopOperationMode = LoopOperationMode.CRASH) {
             val intent = Intent(context, CrashLoopService::class.java).apply {
                 putExtra(EXTRA_PACKAGE_NAMES, arrayOf(packageName))
                 putExtra(EXTRA_INTERVAL_MS, intervalMs)
                 putExtra(EXTRA_STEALTH, stealth)
+                putExtra(EXTRA_OPERATION_MODE, operationMode.name)
             }
             context.startForegroundService(intent)
         }
 
-        fun startMultiple(context: Context, packageNames: List<String>, intervalMs: Long, stealth: Boolean = false): Boolean {
+        fun startMultiple(context: Context, packageNames: List<String>, intervalMs: Long, stealth: Boolean = false, operationMode: LoopOperationMode = LoopOperationMode.CRASH): Boolean {
             val intent = Intent(context, CrashLoopService::class.java).apply {
                 putExtra(EXTRA_PACKAGE_NAMES, packageNames.toTypedArray())
                 putExtra(EXTRA_INTERVAL_MS, intervalMs)
                 putExtra(EXTRA_STEALTH, stealth)
+                putExtra(EXTRA_OPERATION_MODE, operationMode.name)
             }
             return try {
                 context.startForegroundService(intent)
@@ -62,6 +77,7 @@ class CrashLoopService : Service() {
     private var currentPackages = emptyList<String>()
     private var currentIntervalMs = 0L
     private var isStealth = false
+    private var operationMode = LoopOperationMode.CRASH
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -93,9 +109,12 @@ class CrashLoopService : Service() {
             }
             val intervalMs = intent.getLongExtra(EXTRA_INTERVAL_MS, 1000L)
             isStealth = intent.getBooleanExtra(EXTRA_STEALTH, false)
+            operationMode = runCatching {
+                LoopOperationMode.valueOf(intent.getStringExtra(EXTRA_OPERATION_MODE) ?: LoopOperationMode.CRASH.name)
+            }.getOrDefault(LoopOperationMode.CRASH)
 
-            Log.d(TAG, "onStartCommand: packages=$packages, interval=${intervalMs}ms, stealth=$isStealth")
-            CrashLoopState.diag("Start pkg=$packages interval=${intervalMs}ms")
+            Log.d(TAG, "onStartCommand: packages=$packages, interval=${intervalMs}ms, stealth=$isStealth, mode=$operationMode")
+            CrashLoopState.diag("Start pkg=$packages interval=${intervalMs}ms mode=$operationMode")
             logManager.write(TAG, "start pkgs=$packages interval=${intervalMs}ms")
 
             currentPackages = packages
@@ -153,16 +172,16 @@ class CrashLoopService : Service() {
         while (true) {
             for (pkg in packages) {
                 try {
-                    Log.d(TAG, ">>> Crashing $pkg ...")
-                    CrashLoopState.diag("run → $pkg")
-                    val output = execCommand("am crash $pkg")
-                    CrashLoopState.incrementCrash(pkg, output)
+                    Log.d(TAG, ">>> Running $operationMode for $pkg ...")
+                    CrashLoopState.diag("run → $pkg [$operationMode]")
+                    val output = execCommand(buildLoopCommand(pkg, operationMode))
+                    CrashLoopState.incrementCrash(pkg, operationMode, output)
                     CrashLoopState.diag("OK $pkg")
                     logManager.write(TAG, "OK $pkg")
                     Log.d(TAG, "<<< OK: $pkg output=${output.take(200)}")
                 } catch (e: Exception) {
                     Log.e(TAG, "<<< FAIL: $pkg", e)
-                    CrashLoopState.failCrash(pkg, e.message ?: "")
+                    CrashLoopState.failCrash(pkg, operationMode, e.message ?: "")
                     CrashLoopState.diag("FAIL $pkg: ${e.message}")
                     logManager.write(TAG, "FAIL $pkg: ${e.message}", isError = true)
                 }

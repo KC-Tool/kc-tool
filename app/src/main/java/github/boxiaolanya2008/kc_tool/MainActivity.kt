@@ -8,10 +8,12 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -74,6 +76,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private sealed class AppScreen {
+    object Home : AppScreen()
+    object LoopTool : AppScreen()
+}
+
 @Composable
 private fun MainApp(
     isConnected: Boolean,
@@ -81,57 +88,21 @@ private fun MainApp(
     onRequestPermission: () -> Unit,
     settingsManager: SettingsManager
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Home) }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
-            ) {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_home)) },
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.BugReport, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_crash_loop)) },
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_settings)) },
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 }
-                )
-            }
-        }
-    ) { innerPadding ->
-        AnimatedContent(
-            targetState = selectedTab,
-            transitionSpec = {
-                fadeIn() + slideInHorizontally { if (targetState > initialState) it else -it } togetherWith
-                        fadeOut() + slideOutHorizontally { if (targetState > initialState) -it else it }
-            },
-            label = "tab"
-        ) { tab ->
-            when (tab) {
-                0 -> HomeScreen(
+    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+        Box(modifier = Modifier.padding(innerPadding)) {
+            when (currentScreen) {
+                AppScreen.Home -> HomeScreen(
                     isConnected = isConnected,
                     hasPermission = hasPermission,
                     onRequestPermission = onRequestPermission,
-                    modifier = Modifier.padding(innerPadding)
+                    onOpenTool = { currentScreen = AppScreen.LoopTool }
                 )
-                1 -> CrashLoopScreen(
+                AppScreen.LoopTool -> CrashLoopScreen(
                     settingsManager = settingsManager,
-                    modifier = Modifier.padding(innerPadding)
-                )
-                2 -> SettingsScreen(
-                    settingsManager = settingsManager,
-                    modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier.fillMaxSize(),
+                    onBack = { currentScreen = AppScreen.Home }
                 )
             }
         }
@@ -143,22 +114,23 @@ private fun HomeScreen(
     isConnected: Boolean,
     hasPermission: Boolean,
     onRequestPermission: () -> Unit,
+    onOpenTool: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = stringResource(R.string.app_name),
+            text = stringResource(R.string.toolbox_title),
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
 
         Text(
-            text = stringResource(R.string.home_subtitle),
+            text = stringResource(R.string.toolbox_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -170,24 +142,67 @@ private fun HomeScreen(
         )
 
         Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
-            ),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = stringResource(R.string.home_tips_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.home_tips_content),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.home_tips_title), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                Text(stringResource(R.string.home_tips_content), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
             }
+        }
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.toolbox_panel_title), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.toolbox_panel_desc), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ToolTile(
+                        title = stringResource(R.string.tool_loop_tool),
+                        description = stringResource(R.string.tool_loop_tool_desc),
+                        icon = Icons.Default.BugReport,
+                        onClick = { onOpenTool(1) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ToolTile(
+    title: String,
+    description: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.size(44.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, style = MaterialTheme.typography.titleSmall)
+                Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -199,7 +214,8 @@ private fun HomeScreenPreview() {
         HomeScreen(
             isConnected = true,
             hasPermission = true,
-            onRequestPermission = {}
+            onRequestPermission = {},
+            onOpenTool = {}
         )
     }
 }
