@@ -10,23 +10,26 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import github.boxiaolanya2008.kc_tool.manager.LogManager
 import github.boxiaolanya2008.kc_tool.manager.SettingsManager
-import github.boxiaolanya2008.kc_tool.service.CrashLoopState
 import github.boxiaolanya2008.kc_tool.shizuku.ShizukuManager
+import github.boxiaolanya2008.kc_tool.ui.components.AppDrawer
+import github.boxiaolanya2008.kc_tool.ui.components.AppTopBar
+import github.boxiaolanya2008.kc_tool.ui.components.NavItem
 import github.boxiaolanya2008.kc_tool.ui.components.ShizukuStatusCard
 import github.boxiaolanya2008.kc_tool.ui.screens.CrashLoopScreen
+import github.boxiaolanya2008.kc_tool.ui.screens.ProcessManagerScreen
 import github.boxiaolanya2008.kc_tool.ui.screens.SettingsScreen
+import github.boxiaolanya2008.kc_tool.ui.screens.SystemInfoScreen
+import github.boxiaolanya2008.kc_tool.ui.screens.AppManagerScreen
 import github.boxiaolanya2008.kc_tool.ui.theme.KctoolTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var shizukuManager: ShizukuManager
@@ -76,11 +79,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private sealed class AppScreen {
-    object Home : AppScreen()
-    object LoopTool : AppScreen()
-}
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainApp(
     isConnected: Boolean,
@@ -88,22 +87,67 @@ private fun MainApp(
     onRequestPermission: () -> Unit,
     settingsManager: SettingsManager
 ) {
-    var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Home) }
+    var currentNav by remember { mutableStateOf(NavItem.Home) }
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            when (currentScreen) {
-                AppScreen.Home -> HomeScreen(
-                    isConnected = isConnected,
-                    hasPermission = hasPermission,
-                    onRequestPermission = onRequestPermission,
-                    onOpenTool = { currentScreen = AppScreen.LoopTool }
+    val screenTitle = when (currentNav) {
+        NavItem.Home -> stringResource(R.string.toolbox_title)
+        NavItem.LoopTool -> stringResource(R.string.crash_loop_title)
+        NavItem.ProcessManager -> "进程管理"
+        NavItem.SystemInfo -> "系统信息"
+        NavItem.AppManager -> "应用管理"
+        NavItem.Settings -> stringResource(R.string.settings_title)
+    }
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            AppDrawer(
+                currentNav = currentNav,
+                onNavClick = { item ->
+                    currentNav = item
+                    scope.launch { drawerState.close() }
+                }
+            )
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                AppTopBar(
+                    title = screenTitle,
+                    onMenuClick = {
+                        scope.launch { drawerState.open() }
+                    }
                 )
-                AppScreen.LoopTool -> CrashLoopScreen(
-                    settingsManager = settingsManager,
-                    modifier = Modifier.fillMaxSize(),
-                    onBack = { currentScreen = AppScreen.Home }
-                )
+            }
+        ) { innerPadding ->
+            Box(modifier = Modifier.padding(innerPadding)) {
+                when (currentNav) {
+                    NavItem.Home -> HomeScreen(
+                        isConnected = isConnected,
+                        hasPermission = hasPermission,
+                        onRequestPermission = onRequestPermission,
+                        onOpenTool = { currentNav = NavItem.LoopTool }
+                    )
+                    NavItem.LoopTool -> CrashLoopScreen(
+                        settingsManager = settingsManager,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    NavItem.ProcessManager -> ProcessManagerScreen(
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    NavItem.SystemInfo -> SystemInfoScreen(
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    NavItem.AppManager -> AppManagerScreen(
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    NavItem.Settings -> SettingsScreen(
+                        settingsManager = settingsManager,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
     }
@@ -123,12 +167,6 @@ private fun HomeScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = stringResource(R.string.toolbox_title),
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
         Text(
             text = stringResource(R.string.toolbox_subtitle),
             style = MaterialTheme.typography.bodyLarge,
@@ -204,18 +242,5 @@ private fun ToolTile(
             }
             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun HomeScreenPreview() {
-    KctoolTheme {
-        HomeScreen(
-            isConnected = true,
-            hasPermission = true,
-            onRequestPermission = {},
-            onOpenTool = {}
-        )
     }
 }

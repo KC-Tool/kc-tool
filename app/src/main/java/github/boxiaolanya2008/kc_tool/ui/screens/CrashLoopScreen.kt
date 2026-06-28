@@ -47,7 +47,6 @@ data class AppInfo(
 fun CrashLoopScreen(
     settingsManager: SettingsManager,
     modifier: Modifier = Modifier,
-    onBack: () -> Unit,
     vm: CrashLoopViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -86,11 +85,6 @@ fun CrashLoopScreen(
         clearMode -> LoopOperationMode.CLEAR_DATA
         else -> LoopOperationMode.CRASH
     }
-    val titleText = when (currentMode) {
-        LoopOperationMode.BOTH -> stringResource(R.string.loop_both_title)
-        LoopOperationMode.CLEAR_DATA -> stringResource(R.string.clear_data_loop_title)
-        else -> stringResource(R.string.crash_loop_title)
-    }
     val subtitleText = when (currentMode) {
         LoopOperationMode.BOTH -> stringResource(R.string.loop_both_subtitle)
         LoopOperationMode.CLEAR_DATA -> stringResource(R.string.clear_data_loop_subtitle)
@@ -102,34 +96,16 @@ fun CrashLoopScreen(
         else -> stringResource(R.string.crash_mode_hint)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(titleText) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Home, contentDescription = null)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = modifier
-                .padding(padding)
-                .fillMaxSize()
+    Box(
+        modifier = modifier.fillMaxSize()
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 80.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .verticalScroll(rememberScrollState())
-                    .padding(bottom = 80.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
                 AnimatedVisibility(
                     visible = !hasNotificationPermission,
                     enter = fadeIn() + expandVertically(),
@@ -302,21 +278,20 @@ fun CrashLoopScreen(
                 ))
             }
         }
-    }
 
-    if (showAppPicker) {
-        AppPickerDialog(
-            apps = filteredApps,
-            selectedApps = selectedApps,
-            searchQuery = searchQuery,
-            onSearchQueryChange = { vm.updateSearchQuery(it) },
-            onAppToggle = { vm.toggleApp(it) },
-            onSelectAll = { vm.selectAll(filteredApps) },
-            onDeselectAll = { vm.deselectAll() },
-            onDismiss = { showAppPicker = false; vm.updateSearchQuery("") }
-        )
+        if (showAppPicker) {
+            AppPickerDialog(
+                apps = filteredApps,
+                selectedApps = selectedApps,
+                searchQuery = searchQuery,
+                onSearchQueryChange = { vm.updateSearchQuery(it) },
+                onAppToggle = { vm.toggleApp(it) },
+                onSelectAll = { vm.selectAll(filteredApps) },
+                onDeselectAll = { vm.deselectAll() },
+                onDismiss = { showAppPicker = false; vm.updateSearchQuery("") }
+            )
+        }
     }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -427,7 +402,7 @@ private fun CrashStatusCard() {
             text = {
                 val text = logs.take(20).joinToString("\n\n") { entry ->
                     val status = if (entry.success) "OK" else "FAIL"
-                    "[$status] ${entry.timestamp} ${entry.packageName}\n${entry.output.ifEmpty { "(无输出)" }}"
+                    "[$status] ${entry.timestamp} ${entry.packageName}\n${entry.output.ifEmpty { "(无输�?" }}"
                 }
                 Column(modifier = Modifier.heightIn(max = 400.dp)) {
                     Text(

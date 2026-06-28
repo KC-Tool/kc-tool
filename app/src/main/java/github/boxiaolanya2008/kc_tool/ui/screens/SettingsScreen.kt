@@ -14,14 +14,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import github.boxiaolanya2008.kc_tool.R
 import github.boxiaolanya2008.kc_tool.manager.LogManager
 import github.boxiaolanya2008.kc_tool.manager.SettingsManager
-import github.boxiaolanya2008.kc_tool.ui.theme.KctoolTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     settingsManager: SettingsManager,
@@ -34,117 +31,104 @@ fun SettingsScreen(
     var showLogDialog by remember { mutableStateOf(false) }
     var logContent by remember { mutableStateOf("") }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.settings_title)) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        SettingsSection(title = stringResource(R.string.settings_general)) {
+            SettingsSwitchItem(
+                icon = Icons.Default.VisibilityOff,
+                title = stringResource(R.string.settings_stealth_mode),
+                subtitle = stringResource(R.string.settings_stealth_mode_desc),
+                checked = stealthMode,
+                onCheckedChange = { settingsManager.setStealthMode(it) }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            SettingsSwitchItem(
+                icon = Icons.Default.RestartAlt,
+                title = stringResource(R.string.settings_auto_start),
+                subtitle = stringResource(R.string.settings_auto_start_desc),
+                checked = autoStart,
+                onCheckedChange = { settingsManager.setAutoStartOnBoot(it) }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            SettingsSwitchItem(
+                icon = Icons.Default.NotificationsOff,
+                title = "无通知模式",
+                subtitle = "不弹通知直接在后台循环，锁屏或切后台即停",
+                checked = noNotificationMode,
+                onCheckedChange = { settingsManager.setNoNotificationMode(it) }
             )
         }
-    ) { padding ->
-        Column(
-            modifier = modifier
-                .padding(padding)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            SettingsSection(title = stringResource(R.string.settings_general)) {
-                SettingsSwitchItem(
-                    icon = Icons.Default.VisibilityOff,
-                    title = stringResource(R.string.settings_stealth_mode),
-                    subtitle = stringResource(R.string.settings_stealth_mode_desc),
-                    checked = stealthMode,
-                    onCheckedChange = { settingsManager.setStealthMode(it) }
-                )
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-                SettingsSwitchItem(
-                    icon = Icons.Default.RestartAlt,
-                    title = stringResource(R.string.settings_auto_start),
-                    subtitle = stringResource(R.string.settings_auto_start_desc),
-                    checked = autoStart,
-                    onCheckedChange = { settingsManager.setAutoStartOnBoot(it) }
-                )
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-                SettingsSwitchItem(
-                    icon = Icons.Default.NotificationsOff,
-                    title = "无通知模式",
-                    subtitle = "不弹通知直接在后台循环，锁屏或切后台即停",
-                    checked = noNotificationMode,
-                    onCheckedChange = { settingsManager.setNoNotificationMode(it) }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SettingsSection(title = "日志") {
-                SettingsClickItem(
-                    icon = Icons.Default.Description,
-                    title = "查看内部日志",
-                    subtitle = "存储在应用私有目录",
-                    onClick = {
-                        logContent = LogManager.get(context).readInternal()
-                        showLogDialog = true
-                    }
-                )
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-                SettingsClickItem(
-                    icon = Icons.Default.SdStorage,
-                    title = "查看外部日志",
-                    subtitle = "存储在外部私有目录",
-                    onClick = {
-                        logContent = LogManager.get(context).readExternal()
-                        showLogDialog = true
-                    }
-                )
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-                SettingsClickItem(
-                    icon = Icons.Default.Delete,
-                    title = "清除日志",
-                    subtitle = "同时清除内部和外部日志",
-                    onClick = {
-                        LogManager.get(context).clear()
-                        Toast.makeText(context, "日志已清除", Toast.LENGTH_SHORT).show()
-                    }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Info,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                    Text(
-                        text = stringResource(R.string.settings_about),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
+        SettingsSection(title = "日志") {
+            SettingsClickItem(
+                icon = Icons.Default.Description,
+                title = "查看内部日志",
+                subtitle = "存储在应用私有目录",
+                onClick = {
+                    logContent = LogManager.get(context).readInternal()
+                    showLogDialog = true
                 }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            SettingsClickItem(
+                icon = Icons.Default.SdStorage,
+                title = "查看外部日志",
+                subtitle = "存储在外部私有目录",
+                onClick = {
+                    logContent = LogManager.get(context).readExternal()
+                    showLogDialog = true
+                }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            SettingsClickItem(
+                icon = Icons.Default.Delete,
+                title = "清除日志",
+                subtitle = "同时清除内部和外部日志",
+                onClick = {
+                    LogManager.get(context).clear()
+                    Toast.makeText(context, "日志已清除", Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    Icons.Default.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    text = stringResource(R.string.settings_about),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
             }
         }
     }
@@ -282,13 +266,5 @@ private fun SettingsClickItem(
         IconButton(onClick = onClick) {
             Icon(Icons.Default.ChevronRight, null)
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun SettingsScreenPreview() {
-    KctoolTheme {
-        // Preview without real SettingsManager
     }
 }

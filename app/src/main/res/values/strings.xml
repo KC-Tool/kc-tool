@@ -25,7 +25,7 @@
     <string name="tool_loop_tool_desc">在同一页里切换循环崩溃和清理模式，并显示日志输出</string>
 
     <string name="crash_loop_title">循环崩溃应用</string>
-    <string name="crash_loop_subtitle">反复执行 am crash &lt;package_name&gt;，适合异常验证与压力测试</string>
+    <string name="crash_loop_subtitle">反复执行命令，适合异常验证与压力测试</string>
     <string name="crash_loop_command_hint">当前命令：am crash &lt;package_name&gt;</string>
     <string name="clear_data_loop_title">循环清理应用数据</string>
     <string name="clear_data_loop_subtitle">反复执行清理操作，适合清空数据后复测</string>
@@ -92,4 +92,14 @@
     <string name="nav_home">首页</string>
     <string name="nav_loop_tool">循环工具</string>
     <string name="nav_settings">设置</string>
+
+    <string name="process_manager_title">进程管理</string>
+    <string name="process_manager_subtitle">管理运行中的进程</string>
+    <string name="search_process">搜索进程</string>
+    <string name="refresh">刷新</string>
+    <string name="freeze_mode">冻结模式</string>
+    <string name="normal_mode">普通模式</string>
+    <string name="serious_mode">严肃模式</string>
+    <string name="normal_mode_desc">进程会自动恢复</string>
+    <string name="serious_mode_desc">进程不会自动恢复（--sticky）</string>
 </resources>
