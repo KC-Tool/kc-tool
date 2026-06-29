@@ -1,127 +1,133 @@
-悦玺署名许可证 v1.0
-YueXi-Tools Attribution License v1.0
+﻿KCTool Open License v2.0
+========================
 
-Copyright (c) 2024-2026 柏小澜呀 (boxiaolanya2008)
-原作者邮箱 / 联系方式：https://github.com/boxiaolanya2008
+License ID:  kctool-open-2.0
+Official:    https://github.com/boxiaolanya2008
+Aliases:     KC Open License, KCOL-2.0
 
-本许可证适用于 "YueXi-Tools"（悦玺工具箱，包名 cn.boxiaolanya.tools）及其所有随附源代码、文档、资源文件（以下简称"本项目"）。
+This license is not bound to any specific project or author.
+Any individual or organization that adopts this license in their work is deemed
+to have bound that work, in its entirety, to all terms of this license from the
+moment of adoption. The same applies to all derived works.
 
-凡以任何形式使用、复制、修改、合并、发布或分发本项目全部或部分内容的个人或组织（以下简称"被许可方"），即视为已阅读、理解并同意本许可证全部条款。
+The authoritative version of this license is the file of the same name published
+in any public repository maintained under the GitHub account listed above
+(under the "Official:" line). Copies published through any other channel,
+account, or mirror are not authoritative.
 
-----------------------------------------------------------------------
-第 1 条  定义
-----------------------------------------------------------------------
 
-1.1 "原开发者"：指署名 "柏小澜呀"（GitHub: boxiaolanya2008）的本项目初始作者。
+Section 1  Definitions
+========================
 
-1.2 "派生作品"：指基于本项目源代码、文档或二进制形式的全部或部分内容，经修改、转换、翻译、组合或以其他方式形成的新作品，包括但不限于 fork、移植、插件、模块、再编译版本与衍生 APP。
+1.1 "Licensee"  Any individual or organization that, in any work, declares
+    adoption of this license, or that actually uses, copies, modifies, merges,
+    publishes, or distributes such work in any form.
 
-1.3 "分发"：指以任何方式向第三方提供本项目或派生作品的全部或部分内容，包括但不限于：上传至应用市场、网站、网盘、即时通讯群组、二维码分享、API 网络分发、设备预装等。
+1.2 "Work"  The entirety of the content that declares adoption of this license,
+    including source code, documentation, images, audio, video, configuration,
+    data and other resources, and any compilation, merger, conversion or
+    translation of all or part of it.
 
-1.4 "署名信息"：指包含以下全部内容的可被终端用户直接看见或经合理步骤可见的信息：
-    (a) 原开发者姓名或可识别的代号："柏小澜呀" 或 "boxiaolanya2008"；
-    (b) 原项目名称："YueXi-Tools" 或 "悦玺工具箱"；
-    (c) 原项目仓库地址：https://github.com/boxiaolanya2008/YueXi-Tools ；
-    (d) 本许可证文本的链接或副本。
+1.3 "Derivative"  Any new work formed by modifying, converting, translating,
+    combining, or otherwise using the Work, including but not limited to forks,
+    ports, plugins, modules, and recompiled versions.
 
-----------------------------------------------------------------------
-第 2 条  授予的权利
-----------------------------------------------------------------------
+1.4 "Distribution"  Any act of providing the Work or any Derivative, in whole
+    or in part, to a third party, including but not limited to app stores,
+    websites, file hosts, instant messaging groups, QR code sharing, API
+    network distribution, device pre-installation, and SaaS remote services.
 
-在严格遵守本许可证全部条款的前提下，原开发者授予被许可方全球范围、免许可费、非独占、不可转让的以下权利：
+1.5 "Official Account"  The GitHub account named above under the "Official:"
+    line. Only the same-named file published in public repositories maintained
+    under that account, and clearly marked as the official version of this
+    license, is authoritative. Any copy published through any other channel,
+    account, or mirror is not an authoritative version.
 
-2.1 复制、修改、转换本项目源代码；
-2.2 创建派生作品；
-2.3 以源代码或已编译形式分发本项目或派生作品；
-2.4 在自有设备上运行本项目或派生作品。
 
-----------------------------------------------------------------------
-第 3 条  强制条件（核心条款 / Core Obligation）
-----------------------------------------------------------------------
+Section 2  Rights Granted
+========================
 
-被许可方在进行分发时，必须同时满足以下全部条件：
+Subject to strict compliance with all terms of this license, the Licensor
+grants the Licensee a worldwide, royalty-free, non-exclusive, non-transferable
+right to:
 
-3.1 在派生作品的所有源代码副本的显著位置（如 README 顶部、About 页、开屏界面、帮助页底部）保留并完整展示第 1.4 条所定义的"署名信息"，不得遮挡、折叠、淡化、延迟加载至难以发现的位置或以其他方式削弱其可识别性。
+2.1  copy, modify, convert, and translate the Work;
+2.2  create Derivative works;
+2.3  distribute the Work or any Derivative in source or compiled form;
+2.4  use the Work or any Derivative on devices, servers, or within an
+     organization owned or controlled by the Licensee;
+2.5  use the Work or any Derivative for commercial purposes.
 
-3.2 在派生作品所发布的所有二进制分发包的「关于 / 关于我们 / 设置 / 第三方声明 / 致谢」等可被用户主动查看的页面中，保留可点击或可复制的署名信息。
 
-3.3 在派生作品的 Play Store / 应用商店 / 应用市场 等上架资料描述中，于"应用介绍"或"开发者信息"中以文本形式注明"本应用基于 YueXi-Tools 修改，原开发者：柏小澜呀"。
+Section 3  Conditions
+========================
 
-3.4 不得以任何方式声明或暗示派生作品由原开发者官方发布、认可、赞助或与之存在关联，除非事先获得原开发者书面授权。
+3.1  Notice retention.  The Licensee must preserve, in all distributed copies
+     and in any Derivative, the full text of this license and the entries
+     listed in the header (License ID, Official, Aliases). The notice may not
+     be removed, altered, hidden, or otherwise rendered unrecognizable.
 
-3.5 修改的文件必须以显著方式标注修改内容与修改日期。
+3.2  No additional restrictions.  The Licensee may not impose any further
+     restrictions on the exercise of rights granted by this license.
 
-3.6 本许可证文本必须随派生作品一同分发，且不得修改本许可证。
+3.3  Attribution integrity.  The Licensee must not misrepresent the origin of
+     the Work, and must indicate any modifications made.
 
-----------------------------------------------------------------------
-第 4 条  禁止事项
-----------------------------------------------------------------------
 
-4.1 禁止在未保留或删除、修改、遮盖署名信息的情况下，对本项目或派生作品进行分发。
+Section 4  Disclaimer of Liability
+========================
 
-4.2 禁止以任何形式将本项目或派生作品用于以下目的：
-    (a) 违法活动；
-    (b) 对 vivo / iQOO / 任何第三方品牌或用户造成损害的活动；
-    (c) 任何形式的电信诈骗、恶意软件分发、隐私窃取。
+4.1  THE WORK IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF
+     ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
 
-4.3 禁止将原开发者的姓名、商标、Logo 用于未经授权的商业宣传或代言。
+4.2  IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR
+     OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE,
+     ARISING FROM, OUT OF, OR IN CONNECTION WITH THE WORK OR THE USE OF OR
+     OTHER DEALINGS IN THE WORK.
 
-4.4 禁止在派生作品中使用与原项目完全相同或高度近似的名称（如 "YueXi-Tools"、"悦玺工具箱"），以避免用户产生混淆；如确需沿用，须额外标注"非官方修改版"或类似字样。
+4.3  The Licensor is under no obligation to provide any form of technical
+     support, maintenance, debugging, or follow-up service for the Work.
 
-----------------------------------------------------------------------
-第 5 条  侵权认定与救济
-----------------------------------------------------------------------
 
-5.1 任何不符合第 3 条强制条件或违反第 4 条禁止事项的分发行为，即构成对本许可证的实质性违反，并依据《伯尔尼公约》《中华人民共和国著作权法》及其他适用法律构成版权侵权。
+Section 5  Compatibility
+========================
 
-5.2 一旦认定侵权：
-    (a) 被许可方依据本许可证获得的权利自动终止；
-    (b) 原开发者保留要求停止侵权、消除影响、公开道歉、赔偿损失（含合理维权费用）的权利；
-    (c) 不得以"未盈利""小范围使用""不知情"等理由抗辩署名义务；署名义务独立于盈利与否。
+5.1  Re-licensing.  The Licensee may, at its sole discretion, re-license the
+     Work under GPL-3.0-only, Apache-2.0, or MIT, provided that the full text
+     of this license and the header entries are preserved and clearly
+     identified as the prior license.
 
-5.3 原开发者在发现侵权后，有权先行通过公开或私函方式要求 30 日内整改；逾期未整改的，视为拒绝履行。
+5.2  Independent use of other licenses.  This license does not restrict the
+     Licensee from using, distributing, or complying with other open source
+     licenses on a different basis.
 
-----------------------------------------------------------------------
-第 6 条  免责声明
-----------------------------------------------------------------------
 
-6.1 本项目按"现状"（AS IS）和"可获得"（AS AVAILABLE）提供，不附带任何形式的明示或暗示担保，包括但不限于适销性、特定用途适用性、不侵犯第三方权利的担保。
+Section 6  Authoritative Version
+========================
 
-6.2 原开发者不对因使用、修改、分发本项目或派生作品而产生的任何直接或间接损失、数据丢失、设备损坏、系统崩溃、账号封禁、用户纠纷、法律责任等承担任何责任。
+6.1  The authoritative version of this license is the file of the same name
+     published in a public repository maintained under the Official Account
+     listed in the header, and clearly marked as the official version.
 
-6.3 修改或分发本项目即代表被许可方已自行评估相关风险，并承诺承担因该行为产生的一切后果。
+6.2  Any modification, translation, or excerpt that diverges from the
+     authoritative version is not a valid version of this license. The
+     Licensee must, in case of doubt, defer to the authoritative version.
 
-----------------------------------------------------------------------
-第 7 条  责任限制
-----------------------------------------------------------------------
 
-在任何情况下，原开发者因本项目或其派生作品所承担的累计责任，不超过被许可方为获得本项目所支付的合理对价（若无对价，则不超过人民币壹佰元整 ¥100）。
+Section 7  Final Provisions
+========================
 
-----------------------------------------------------------------------
-第 8 条  协议终止
-----------------------------------------------------------------------
+7.1  Severability.  If any provision of this license is found unenforceable,
+     the remaining provisions remain in full force and effect.
 
-8.1 被许可方违反本许可证任何条款时，依据本许可证获得的权利自违约之时起自动终止，无需原开发者另行通知。
+7.2  No waiver.  Failure to enforce any provision does not constitute a waiver
+     of that provision or any other provision.
 
-8.2 协议终止后，被许可方应立即停止分发并销毁其持有的全部副本；已分发的副本中署名信息仍需保留。
+7.3  Entire agreement.  This license constitutes the entire agreement between
+     the Licensor and the Licensee regarding the Work, and supersedes any prior
+     understanding, written or oral, on the same subject.
 
-----------------------------------------------------------------------
-第 9 条  其他
-----------------------------------------------------------------------
 
-9.1 本许可证的任何条款被认定无效或不可执行时，其余条款仍然有效。
-
-9.2 本许可证的变更或补充，须经原开发者以书面形式公开发布；既往版本下的合法权利不受追溯影响。
-
-9.3 本许可证的解释权归原开发者所有。
-
-----------------------------------------------------------------------
-结语
-----------------------------------------------------------------------
-
-本项目的诞生凝聚了原开发者两年的业余时间与心血。署名义务是保留这份传承的最基本要求。
-
-感谢您尊重开源精神。
-
-— 柏小澜呀
-  2026
+KCTool Open License v2.0
+Official source: https://github.com/boxiaolanya2008

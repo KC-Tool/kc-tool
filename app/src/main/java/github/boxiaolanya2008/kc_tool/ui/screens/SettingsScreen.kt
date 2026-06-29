@@ -1,5 +1,4 @@
 package github.boxiaolanya2008.kc_tool.ui.screens
-
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,9 +15,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import github.boxiaolanya2008.kc_tool.R
+import github.boxiaolanya2008.kc_tool.ui.anim.LottieKind
+import github.boxiaolanya2008.kc_tool.ui.anim.LottieView
 import github.boxiaolanya2008.kc_tool.manager.LogManager
 import github.boxiaolanya2008.kc_tool.manager.SettingsManager
-
 @Composable
 fun SettingsScreen(
     settingsManager: SettingsManager,
@@ -30,7 +30,6 @@ fun SettingsScreen(
     val noNotificationMode by settingsManager.noNotificationMode.collectAsState()
     var showLogDialog by remember { mutableStateOf(false) }
     var logContent by remember { mutableStateOf("") }
-
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -46,9 +45,7 @@ fun SettingsScreen(
                 checked = stealthMode,
                 onCheckedChange = { settingsManager.setStealthMode(it) }
             )
-
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
             SettingsSwitchItem(
                 icon = Icons.Default.RestartAlt,
                 title = stringResource(R.string.settings_auto_start),
@@ -56,9 +53,7 @@ fun SettingsScreen(
                 checked = autoStart,
                 onCheckedChange = { settingsManager.setAutoStartOnBoot(it) }
             )
-
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
             SettingsSwitchItem(
                 icon = Icons.Default.NotificationsOff,
                 title = "无通知模式",
@@ -67,9 +62,7 @@ fun SettingsScreen(
                 onCheckedChange = { settingsManager.setNoNotificationMode(it) }
             )
         }
-
         Spacer(modifier = Modifier.height(16.dp))
-
         SettingsSection(title = "日志") {
             SettingsClickItem(
                 icon = Icons.Default.Description,
@@ -80,9 +73,7 @@ fun SettingsScreen(
                     showLogDialog = true
                 }
             )
-
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
             SettingsClickItem(
                 icon = Icons.Default.SdStorage,
                 title = "查看外部日志",
@@ -92,9 +83,7 @@ fun SettingsScreen(
                     showLogDialog = true
                 }
             )
-
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
             SettingsClickItem(
                 icon = Icons.Default.Delete,
                 title = "清除日志",
@@ -105,9 +94,7 @@ fun SettingsScreen(
                 }
             )
         }
-
         Spacer(modifier = Modifier.height(16.dp))
-
         Card(
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer
@@ -119,11 +106,7 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(
-                    Icons.Default.Info,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer
-                )
+                LottieView(kind = LottieKind.Shield, size = 40.dp)
                 Text(
                     text = stringResource(R.string.settings_about),
                     style = MaterialTheme.typography.bodyMedium,
@@ -132,7 +115,6 @@ fun SettingsScreen(
             }
         }
     }
-
     if (showLogDialog) {
         AlertDialog(
             onDismissRequest = { showLogDialog = false },
@@ -150,7 +132,6 @@ fun SettingsScreen(
         )
     }
 }
-
 @Composable
 private fun SettingsSection(
     title: String,
@@ -176,7 +157,6 @@ private fun SettingsSection(
         }
     }
 }
-
 @Composable
 private fun SettingsSwitchItem(
     icon: ImageVector,
@@ -223,7 +203,6 @@ private fun SettingsSwitchItem(
         )
     }
 }
-
 @Composable
 private fun SettingsClickItem(
     icon: ImageVector,

@@ -1,4 +1,4 @@
-package github.boxiaolanya2008.kc_tool.ui.screens
+﻿package github.boxiaolanya2008.kc_tool.ui.screens
 
 import android.content.pm.ApplicationInfo
 import android.graphics.drawable.Drawable
@@ -17,9 +17,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import github.boxiaolanya2008.kc_tool.ui.anim.LottieKind
+import github.boxiaolanya2008.kc_tool.ui.anim.LottieView
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import rikka.shizuku.Shizuku
 
 data class AppEntry(
@@ -28,6 +33,20 @@ data class AppEntry(
     val isSystemApp: Boolean,
     val icon: Drawable?
 )
+
+private suspend fun runShell(command: String): Triple<String, String, Int> = withTimeout(15_000) {
+    val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
+    coroutineScope {
+        val outDef = async(Dispatchers.IO) {
+            runCatching { process.inputStream.bufferedReader().readText() }.getOrDefault("")
+        }
+        val errDef = async(Dispatchers.IO) {
+            runCatching { process.errorStream.bufferedReader().readText() }.getOrDefault("")
+        }
+        val code = process.waitFor()
+        Triple(outDef.await(), errDef.await(), code)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +68,8 @@ fun AppManagerScreen(modifier: Modifier = Modifier) {
                 AppEntry(
                     packageName = info.packageName,
                     appName = info.loadLabel(pm).toString(),
-                    isSystemApp = (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
+                    isSystemApp = (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                                  && (info.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0,
                     icon = try { pm.getApplicationIcon(info) } catch (_: Exception) { null }
                 )
             }.sortedWith(compareByDescending<AppEntry> { it.isSystemApp }.thenBy { it.appName })
@@ -73,7 +93,7 @@ fun AppManagerScreen(modifier: Modifier = Modifier) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            label = { Text("搜索应用") },
+            label = { Text("\u641c\u7d22\u5e94\u7528") },
             leadingIcon = { Icon(Icons.Default.Search, null) },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
@@ -93,7 +113,7 @@ fun AppManagerScreen(modifier: Modifier = Modifier) {
         ) {
             AssistChip(
                 onClick = { showSystemApps = !showSystemApps },
-                label = { Text(if (showSystemApps) "隐藏系统" else "显示系统") },
+                label = { Text(if (showSystemApps) "\u9690\u85cf\u7cfb\u7edf" else "\u663e\u793a\u7cfb\u7edf") },
                 leadingIcon = { Icon(if (showSystemApps) Icons.Default.VisibilityOff else Icons.Default.Visibility, null, modifier = Modifier.size(18.dp)) }
             )
             AssistChip(
@@ -106,41 +126,33 @@ fun AppManagerScreen(modifier: Modifier = Modifier) {
                             AppEntry(
                                 packageName = info.packageName,
                                 appName = info.loadLabel(pm).toString(),
-                                isSystemApp = (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
+                                isSystemApp = (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                                              && (info.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0,
                                 icon = try { pm.getApplicationIcon(info) } catch (_: Exception) { null }
                             )
                         }.sortedWith(compareByDescending<AppEntry> { it.isSystemApp }.thenBy { it.appName })
                         isLoading = false
                     }
                 },
-                label = { Text("刷新") },
+                label = { Text("\u5237\u65b0") },
                 leadingIcon = { Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp)) }
             )
         }
 
-        Text(
-            text = "共 ${filteredApps.size} 个应用",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
         if (isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+            Box(modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp), contentAlignment = Alignment.Center) {
+                LottieView(kind = LottieKind.Spinner, size = 80.dp)
             }
         } else {
             LazyColumn(
+                modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(filteredApps, key = { it.packageName }) { app ->
                     ListItem(
                         headlineContent = { Text(app.appName) },
                         supportingContent = {
-                            Text(
-                                app.packageName,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Text(app.packageName, style = MaterialTheme.typography.bodySmall)
                         },
                         leadingContent = {
                             if (app.icon != null) {
@@ -192,56 +204,79 @@ fun AppManagerScreen(modifier: Modifier = Modifier) {
                             modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp)
                         ) {
                             Text(
-                                text = commandOutput.ifEmpty { "执行中..." },
+                                text = commandOutput.ifEmpty { "\u6267\u884c\u4e2d..." },
                                 style = MaterialTheme.typography.bodySmall,
                                 modifier = Modifier.padding(8.dp)
                             )
                         }
                     } else {
-                        Text("选择操作：", style = MaterialTheme.typography.bodyMedium)
+                        Text("\u9009\u62e9\u64cd\u4f5c\uff1a", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             },
             confirmButton = {
                 if (!showOutput) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilledTonalButton(onClick = {
-                            scope.launch(Dispatchers.IO) {
-                                showOutput = true
-                                commandOutput = "正在强制停止..."
-                                try {
-                                    val p = Shizuku.newProcess(arrayOf("sh", "-c", "am force-stop ${app.packageName}"), null, null)
-                                    p.waitFor()
-                                    commandOutput = "已强制停止 ${app.packageName}"
-                                } catch (e: Exception) {
-                                    commandOutput = "失败: ${e.message}"
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilledTonalButton(onClick = {
+                                scope.launch(Dispatchers.IO) {
+                                    showOutput = true
+                                    commandOutput = "\u6b63\u5728\u5f3a\u5236\u505c\u6b62..."
+                                    val (out, err, code) = runShell("am force-stop ${app.packageName}")
+                                    commandOutput = if (code == 0) "\u5df2\u5f3a\u5236\u505c\u6b62: ${app.packageName}\n" + out.trim()
+                                                    else "\u5931\u8d25 (exit=$code): ${err.trim().ifEmpty { out.trim() }}"
                                 }
-                            }
-                        }) { Text("强制停止") }
+                            }) { Text("\u5f3a\u5236\u505c\u6b62") }
 
-                        Button(onClick = {
-                            scope.launch(Dispatchers.IO) {
-                                showOutput = true
-                                commandOutput = "正在清除数据..."
-                                try {
-                                    val p = Shizuku.newProcess(arrayOf("sh", "-c", "pm clear ${app.packageName}"), null, null)
-                                    p.waitFor()
-                                    commandOutput = "已清除数据 ${app.packageName}"
-                                } catch (e: Exception) {
-                                    commandOutput = "失败: ${e.message}"
+                            Button(onClick = {
+                                scope.launch(Dispatchers.IO) {
+                                    showOutput = true
+                                    commandOutput = "\u6b63\u5728\u6e05\u9664\u6570\u636e..."
+                                    val (out, err, code) = runShell("pm clear ${app.packageName}")
+                                    commandOutput = if (code == 0) "\u5df2\u6e05\u9664\u6570\u636e: ${app.packageName}\n" + out.trim()
+                                                    else "\u5931\u8d25 (exit=$code): ${err.trim().ifEmpty { out.trim() }}"
                                 }
-                            }
-                        }) { Text("清除数据") }
+                            }) { Text("\u6e05\u9664\u6570\u636e") }
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilledTonalButton(
+                                onClick = {
+                                    scope.launch(Dispatchers.IO) {
+                                        showOutput = true
+                                        commandOutput = "\u6b63\u5728\u52a0\u5165\u767d\u540d\u5355..."
+                                        val (out, err, code) = runShell("dumpsys deviceidle whitelist +${app.packageName}")
+                                        commandOutput = if (code == 0) "\u5df2\u52a0\u5165\u767d\u540d\u5355: ${app.packageName}\n" + out.trim()
+                                                        else "\u5931\u8d25 (exit=$code): ${err.trim().ifEmpty { out.trim() }}"
+                                    }
+                                },
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            ) { Text("\u52a0\u5165\u767d\u540d\u5355") }
+
+                            OutlinedButton(
+                                onClick = {
+                                    scope.launch(Dispatchers.IO) {
+                                        showOutput = true
+                                        commandOutput = "\u6b63\u5728\u79fb\u51fa\u767d\u540d\u5355..."
+                                        val (out, err, code) = runShell("dumpsys deviceidle whitelist -${app.packageName}")
+                                        commandOutput = if (code == 0) "\u5df2\u79fb\u51fa\u767d\u540d\u5355: ${app.packageName}\n" + out.trim()
+                                                        else "\u5931\u8d25 (exit=$code): ${err.trim().ifEmpty { out.trim() }}"
+                                    }
+                                }
+                            ) { Text("\u79fb\u51fa\u767d\u540d\u5355") }
+                        }
                     }
                 } else {
                     TextButton(onClick = { showActionDialog = false; showOutput = false; commandOutput = "" }) {
-                        Text("关闭")
+                        Text("\u5173\u95ed")
                     }
                 }
             },
             dismissButton = {
                 if (!showOutput) {
-                    TextButton(onClick = { showActionDialog = false }) { Text("取消") }
+                    TextButton(onClick = { showActionDialog = false }) { Text("\u53d6\u6d88") }
                 }
             }
         )

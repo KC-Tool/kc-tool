@@ -1,4 +1,5 @@
 [versions]
+lottie = "6.4.0"
 agp = "8.13.2"
 kotlin = "2.0.21"
 coreKtx = "1.17.0"
@@ -12,6 +13,7 @@ composeBom = "2024.09.00"
 shizuku = "13.1.0"
 
 [libraries]
+lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

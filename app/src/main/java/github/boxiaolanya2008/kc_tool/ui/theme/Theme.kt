@@ -1,8 +1,7 @@
-package github.boxiaolanya2008.kc_tool.ui.theme
+﻿package github.boxiaolanya2008.kc_tool.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -11,19 +10,84 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+private val ToolDarkColors = darkColorScheme(
+    primary = ToolPrimaryDark,
+    onPrimary = ToolOnPrimaryDark,
+    primaryContainer = ToolPrimaryContainerDark,
+    onPrimaryContainer = ToolOnPrimaryContainerDark,
+    secondary = ToolSecondaryDark,
+    onSecondary = ToolOnSecondaryDark,
+    secondaryContainer = ToolSecondaryContainerDark,
+    onSecondaryContainer = ToolOnSecondaryContainerDark,
+    tertiary = ToolTertiaryDark,
+    onTertiary = ToolOnTertiaryDark,
+    tertiaryContainer = ToolTertiaryContainerDark,
+    onTertiaryContainer = ToolOnTertiaryContainerDark,
+    error = ToolErrorDark,
+    onError = ToolOnErrorDark,
+    errorContainer = ToolErrorContainerDark,
+    onErrorContainer = ToolOnErrorContainerDark,
+    background = ToolBackgroundDark,
+    onBackground = ToolOnBackgroundDark,
+    surface = ToolSurfaceDark,
+    onSurface = ToolOnSurfaceDark,
+    surfaceVariant = ToolSurfaceVariantDark,
+    onSurfaceVariant = ToolOnSurfaceVariantDark,
+    outline = ToolOutlineDark,
+    outlineVariant = ToolOutlineVariantDark,
+    scrim = ToolScrimDark,
+    inverseSurface = ToolInverseSurfaceDark,
+    inverseOnSurface = ToolInverseOnSurfaceDark,
+    inversePrimary = ToolInversePrimaryDark,
+    surfaceTint = ToolSurfaceTintDark,
+    surfaceBright = ToolSurfaceBrightDark,
+    surfaceDim = ToolSurfaceDimDark,
+    surfaceContainerLowest = ToolSurfaceContainerLowestDark,
+    surfaceContainerLow = ToolSurfaceContainerLowDark,
+    surfaceContainer = ToolSurfaceContainerDark,
+    surfaceContainerHigh = ToolSurfaceContainerHighDark,
+    surfaceContainerHighest = ToolSurfaceContainerHighestDark
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+private val ToolLightColors = lightColorScheme(
+    primary = ToolPrimaryLight,
+    onPrimary = ToolOnPrimaryLight,
+    primaryContainer = ToolPrimaryContainerLight,
+    onPrimaryContainer = ToolOnPrimaryContainerLight,
+    secondary = ToolSecondaryLight,
+    onSecondary = ToolOnSecondaryLight,
+    secondaryContainer = ToolSecondaryContainerLight,
+    onSecondaryContainer = ToolOnSecondaryContainerLight,
+    tertiary = ToolTertiaryLight,
+    onTertiary = ToolOnTertiaryLight,
+    tertiaryContainer = ToolTertiaryContainerLight,
+    onTertiaryContainer = ToolOnTertiaryContainerLight,
+    error = ToolErrorLight,
+    onError = ToolOnErrorLight,
+    errorContainer = ToolErrorContainerLight,
+    onErrorContainer = ToolOnErrorContainerLight,
+    background = ToolBackgroundLight,
+    onBackground = ToolOnBackgroundLight,
+    surface = ToolSurfaceLight,
+    onSurface = ToolOnSurfaceLight,
+    surfaceVariant = ToolSurfaceVariantLight,
+    onSurfaceVariant = ToolOnSurfaceVariantLight,
+    outline = ToolOutlineLight,
+    outlineVariant = ToolOutlineVariantLight,
+    scrim = ToolScrimLight,
+    inverseSurface = ToolInverseSurfaceLight,
+    inverseOnSurface = ToolInverseOnSurfaceLight,
+    inversePrimary = ToolInversePrimaryLight,
+    surfaceTint = ToolSurfaceTintLight,
+    surfaceBright = ToolSurfaceBrightLight,
+    surfaceDim = ToolSurfaceDimLight,
+    surfaceContainerLowest = ToolSurfaceContainerLowestLight,
+    surfaceContainerLow = ToolSurfaceContainerLowLight,
+    surfaceContainer = ToolSurfaceContainerLight,
+    surfaceContainerHigh = ToolSurfaceContainerHighLight,
+    surfaceContainerHighest = ToolSurfaceContainerHighestLight
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KctoolTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -35,8 +99,8 @@ fun KctoolTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> ToolDarkColors
+        else -> ToolLightColors
     }
 
     MaterialTheme(

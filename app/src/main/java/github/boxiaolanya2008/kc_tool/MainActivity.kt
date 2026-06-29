@@ -1,4 +1,4 @@
-package github.boxiaolanya2008.kc_tool
+﻿package github.boxiaolanya2008.kc_tool
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -26,8 +26,8 @@ import github.boxiaolanya2008.kc_tool.ui.components.ShizukuStatusCard
 import github.boxiaolanya2008.kc_tool.ui.screens.CrashLoopScreen
 import github.boxiaolanya2008.kc_tool.ui.screens.ProcessManagerScreen
 import github.boxiaolanya2008.kc_tool.ui.screens.SettingsScreen
-import github.boxiaolanya2008.kc_tool.ui.screens.SystemInfoScreen
 import github.boxiaolanya2008.kc_tool.ui.screens.AppManagerScreen
+import github.boxiaolanya2008.kc_tool.ui.screens.WhitelistScreen
 import github.boxiaolanya2008.kc_tool.ui.theme.KctoolTheme
 import kotlinx.coroutines.launch
 
@@ -91,11 +91,11 @@ private fun MainApp(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
+    var showWhitelist by remember { mutableStateOf(false) }
     val screenTitle = when (currentNav) {
         NavItem.Home -> stringResource(R.string.toolbox_title)
         NavItem.LoopTool -> stringResource(R.string.crash_loop_title)
         NavItem.ProcessManager -> "进程管理"
-        NavItem.SystemInfo -> "系统信息"
         NavItem.AppManager -> "应用管理"
         NavItem.Settings -> stringResource(R.string.settings_title)
     }
@@ -118,7 +118,8 @@ private fun MainApp(
                     title = screenTitle,
                     onMenuClick = {
                         scope.launch { drawerState.open() }
-                    }
+                    },
+                    onWhitelistClick = { showWhitelist = true }
                 )
             }
         ) { innerPadding ->
@@ -137,14 +138,17 @@ private fun MainApp(
                     NavItem.ProcessManager -> ProcessManagerScreen(
                         modifier = Modifier.fillMaxSize()
                     )
-                    NavItem.SystemInfo -> SystemInfoScreen(
-                        modifier = Modifier.fillMaxSize()
-                    )
                     NavItem.AppManager -> AppManagerScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                     NavItem.Settings -> SettingsScreen(
                         settingsManager = settingsManager,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                if (showWhitelist) {
+                    WhitelistScreen(
+                        onBack = { showWhitelist = false },
                         modifier = Modifier.fillMaxSize()
                     )
                 }

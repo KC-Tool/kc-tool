@@ -1,5 +1,4 @@
 package github.boxiaolanya2008.kc_tool.viewmodel
-
 import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
@@ -11,42 +10,35 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import rikka.shizuku.Shizuku
-
 class ProcessManagerViewModel(application: Application) : AndroidViewModel(application) {
-
     private val pm = application.packageManager
     private val prefs = application.getSharedPreferences("frozen_prefs", Context.MODE_PRIVATE)
-
     private val _processes = MutableStateFlow<List<ProcessInfo>>(emptyList())
     val processes: StateFlow<List<ProcessInfo>> = _processes.asStateFlow()
-
     private val _selectedProcesses = MutableStateFlow<Set<String>>(emptySet())
     val selectedProcesses: StateFlow<Set<String>> = _selectedProcesses.asStateFlow()
-
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
     private val _frozenProcesses = MutableStateFlow<Set<String>>(emptySet())
     val frozenProcesses: StateFlow<Set<String>> = _frozenProcesses.asStateFlow()
-
     init {
         loadFrozenState()
         loadProcesses()
     }
-
     private fun loadFrozenState() {
         val saved = prefs.getStringSet("frozen", emptySet()) ?: emptySet()
         _frozenProcesses.value = saved
     }
-
     private fun saveFrozenState() {
         prefs.edit().putStringSet("frozen", _frozenProcesses.value).apply()
     }
-
     fun loadProcesses() {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
@@ -76,7 +68,6 @@ class ProcessManagerViewModel(application: Application) : AndroidViewModel(appli
             }
         }
     }
-
     private fun sortProcesses() {
         val frozen = _frozenProcesses.value
         _processes.value = _processes.value.sortedWith(
@@ -85,7 +76,6 @@ class ProcessManagerViewModel(application: Application) : AndroidViewModel(appli
                 .thenBy { it.packageName }
         )
     }
-
     private fun getThirdPartyPackages(): Set<String> {
         return try {
             val output = execCommand("pm list packages -3")
@@ -97,7 +87,6 @@ class ProcessManagerViewModel(application: Application) : AndroidViewModel(appli
             emptySet()
         }
     }
-
     fun toggleProcess(packageName: String) {
         _selectedProcesses.value = if (packageName in _selectedProcesses.value) {
             _selectedProcesses.value - packageName
@@ -105,19 +94,15 @@ class ProcessManagerViewModel(application: Application) : AndroidViewModel(appli
             _selectedProcesses.value + packageName
         }
     }
-
     fun selectAll(processes: List<ProcessInfo>) {
         _selectedProcesses.value = processes.map { it.packageName }.toSet()
     }
-
     fun deselectAll() {
         _selectedProcesses.value = emptySet()
     }
-
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
     }
-
     fun freezeProcess(packageName: String, sticky: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             val command = if (sticky) {
@@ -125,7 +110,6 @@ class ProcessManagerViewModel(application: Application) : AndroidViewModel(appli
             } else {
                 "am freeze $packageName"
             }
-
             try {
                 execCommand(command)
                 _frozenProcesses.value = _frozenProcesses.value + packageName
@@ -135,7 +119,6 @@ class ProcessManagerViewModel(application: Application) : AndroidViewModel(appli
             }
         }
     }
-
     fun unfreezeProcess(packageName: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -147,7 +130,6 @@ class ProcessManagerViewModel(application: Application) : AndroidViewModel(appli
             }
         }
     }
-
     fun batchFreeze(sticky: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             val targets = _selectedProcesses.value.toList()
@@ -167,7 +149,6 @@ class ProcessManagerViewModel(application: Application) : AndroidViewModel(appli
             sortProcesses()
         }
     }
-
     fun batchUnfreeze() {
         viewModelScope.launch(Dispatchers.IO) {
             val targets = _selectedProcesses.value.toList()
@@ -182,42 +163,43 @@ class ProcessManagerViewModel(application: Application) : AndroidViewModel(appli
             sortProcesses()
         }
     }
-
     private fun execCommand(command: String): String {
-        val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
-        val output = process.inputStream.bufferedReader().readText()
-        val error = process.errorStream.bufferedReader().readText()
-        val exitCode = process.waitFor()
-        if (exitCode != 0) throw RuntimeException("exit=$exitCode err=$error")
-        return output.ifEmpty { error }
+        val (out, err, code) = runBlocking {
+            withTimeout(15_000) {
+                val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
+                coroutineScope {
+                    val outDef = async(Dispatchers.IO) {
+                        runCatching { process.inputStream.bufferedReader().readText() }.getOrDefault("")
+                    }
+                    val errDef = async(Dispatchers.IO) {
+                        runCatching { process.errorStream.bufferedReader().readText() }.getOrDefault("")
+                    }
+                    val c = process.waitFor()
+                    Triple(outDef.await(), errDef.await(), c)
+                }
+            }
+        }
+        if (code != 0) throw RuntimeException("exit=$code err=$err")
+        return out.ifEmpty { err }
     }
-
     private fun parsePsOutput(output: String, thirdPartyPkgs: Set<String>): List<ProcessInfo> {
         val processes = mutableListOf<ProcessInfo>()
         val seen = mutableSetOf<String>()
-
         for (line in output.lines()) {
             val trimmed = line.trim()
             if (trimmed.startsWith("USER") || trimmed.startsWith("PID") || trimmed.isEmpty()) continue
-
             val parts = trimmed.split("\\s+".toRegex())
             if (parts.size < 3) continue
-
             val pid = parts[1].toIntOrNull() ?: parts[0].toIntOrNull() ?: continue
             val fullName = parts.last()
-
             val pkgName = if (fullName.contains("/")) {
                 fullName.substringBefore("/")
             } else {
                 fullName
             }.trimEnd('|', ' ', '\t', '\u0000', '\n', '\r')
-
             if (pkgName.isEmpty() || pkgName.startsWith("[") || pkgName.startsWith("/")) continue
-
             if (!seen.add(pkgName)) continue
-
             val isThirdParty = pkgName in thirdPartyPkgs
-
             processes.add(
                 ProcessInfo(
                     packageName = pkgName,
@@ -228,7 +210,6 @@ class ProcessManagerViewModel(application: Application) : AndroidViewModel(appli
                 )
             )
         }
-
         return processes
     }
 }

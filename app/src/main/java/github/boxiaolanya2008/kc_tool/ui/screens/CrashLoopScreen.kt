@@ -34,6 +34,8 @@ import github.boxiaolanya2008.kc_tool.manager.SettingsManager
 import github.boxiaolanya2008.kc_tool.service.CrashLoopService
 import github.boxiaolanya2008.kc_tool.service.CrashLoopState
 import github.boxiaolanya2008.kc_tool.service.LoopOperationMode
+import github.boxiaolanya2008.kc_tool.ui.anim.LottieKind
+import github.boxiaolanya2008.kc_tool.ui.anim.LottieView
 import github.boxiaolanya2008.kc_tool.viewmodel.CrashLoopViewModel
 
 data class AppInfo(
@@ -352,7 +354,7 @@ private fun CrashStatusCard() {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Analytics, null, tint = if (serviceRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                    if (serviceRunning) LottieView(kind = LottieKind.Rocket, size = 28.dp) else Icon(Icons.Default.Analytics, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.crash_status), style = MaterialTheme.typography.titleMedium)
                 }

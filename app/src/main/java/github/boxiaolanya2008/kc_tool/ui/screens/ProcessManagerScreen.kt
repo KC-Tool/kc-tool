@@ -16,6 +16,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewmodel.compose.viewModel
+import github.boxiaolanya2008.kc_tool.ui.anim.LottieKind
+import github.boxiaolanya2008.kc_tool.ui.anim.LottieView
 import github.boxiaolanya2008.kc_tool.viewmodel.ProcessManagerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -65,16 +67,27 @@ fun ProcessManagerScreen(
                 singleLine = true
             )
 
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                SegmentedButton(
+                    selected = showSystemProcesses,
+                    onClick = { showSystemProcesses = true },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                    icon = { Icon(Icons.Default.Visibility, null, modifier = Modifier.size(18.dp)) }
+                ) { Text("显示系统") }
+
+                SegmentedButton(
+                    selected = !showSystemProcesses,
+                    onClick = { showSystemProcesses = false },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                    icon = { Icon(Icons.Default.VisibilityOff, null, modifier = Modifier.size(18.dp)) }
+                ) { Text("隐藏系统") }
+            }
+
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                AssistChip(
-                    onClick = { showSystemProcesses = !showSystemProcesses },
-                    label = { Text(if (showSystemProcesses) "隐藏系统" else "显示系统") },
-                    leadingIcon = { Icon(if (showSystemProcesses) Icons.Default.VisibilityOff else Icons.Default.Visibility, null, modifier = Modifier.size(18.dp)) }
-                )
                 AssistChip(
                     onClick = { vm.selectAll(filteredProcesses) },
                     label = { Text("全选") },
@@ -133,7 +146,7 @@ fun ProcessManagerScreen(
 
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                LottieView(kind = LottieKind.Spinner, size = 80.dp)
             }
         } else {
             LazyColumn(

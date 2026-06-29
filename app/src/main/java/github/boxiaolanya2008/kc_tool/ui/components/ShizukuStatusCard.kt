@@ -1,5 +1,4 @@
 package github.boxiaolanya2008.kc_tool.ui.components
-
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -16,9 +15,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import github.boxiaolanya2008.kc_tool.ui.anim.LottieKind
+import github.boxiaolanya2008.kc_tool.ui.anim.LottieView
 import github.boxiaolanya2008.kc_tool.R
 import github.boxiaolanya2008.kc_tool.ui.theme.KctoolTheme
-
 @Composable
 fun ShizukuStatusCard(
     isConnected: Boolean,
@@ -34,12 +34,12 @@ fun ShizukuStatusCard(
         },
         label = "statusColor"
     )
-
-    Card(
+    ElevatedCard(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
+        colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -80,23 +80,21 @@ fun ShizukuStatusCard(
                     )
                 }
             }
-
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    imageVector = when {
-                        isConnected -> Icons.Default.CheckCircle
-                        else -> Icons.Default.Error
-                    },
-                    contentDescription = null,
-                    tint = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
+                if (isConnected) {
+                    LottieView(kind = LottieKind.Check, size = 22.dp, iterations = 1)
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Error,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
                 Text(
                     text = if (isConnected) {
                         stringResource(R.string.shizuku_connected)
@@ -126,7 +124,6 @@ fun ShizukuStatusCard(
                     )
                 }
             }
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -177,7 +174,6 @@ fun ShizukuStatusCard(
         }
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 private fun ShizukuStatusCardPreview() {
