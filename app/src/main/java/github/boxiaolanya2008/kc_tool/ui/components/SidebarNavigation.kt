@@ -1,4 +1,4 @@
-﻿package github.boxiaolanya2008.kc_tool.ui.components
+package github.boxiaolanya2008.kc_tool.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -13,11 +13,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 enum class NavItem(val title: String, val icon: ImageVector) {
-    Home("\u9996\u9875", Icons.Default.Home),
-    LoopTool("\u5faa\u73af\u5de5\u5177", Icons.Default.BugReport),
-    ProcessManager("\u8fdb\u7a0b\u7ba1\u7406", Icons.Default.Memory),
-    AppManager("\u5e94\u7528\u7ba1\u7406", Icons.Default.Apps),
-    Settings("\u8bbe\u7f6e", Icons.Default.Settings)
+    Home("首页", Icons.Default.Home),
+    LoopTool("循环工具", Icons.Default.BugReport),
+    AudioEffect("全局音效", Icons.Default.GraphicEq),
+    ProcessManager("进程管理", Icons.Default.Memory),
+    AppManager("应用管理", Icons.Default.Apps),
+    Settings("设置", Icons.Default.Settings)
 }
 
 @Composable

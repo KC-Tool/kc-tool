@@ -1,4 +1,4 @@
-﻿package github.boxiaolanya2008.kc_tool
+package github.boxiaolanya2008.kc_tool
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -24,6 +24,7 @@ import github.boxiaolanya2008.kc_tool.ui.components.AppTopBar
 import github.boxiaolanya2008.kc_tool.ui.components.NavItem
 import github.boxiaolanya2008.kc_tool.ui.components.ShizukuStatusCard
 import github.boxiaolanya2008.kc_tool.ui.screens.CrashLoopScreen
+import github.boxiaolanya2008.kc_tool.ui.screens.AudioEffectScreen
 import github.boxiaolanya2008.kc_tool.ui.screens.ProcessManagerScreen
 import github.boxiaolanya2008.kc_tool.ui.screens.SettingsScreen
 import github.boxiaolanya2008.kc_tool.ui.screens.AppManagerScreen
@@ -95,6 +96,7 @@ private fun MainApp(
     val screenTitle = when (currentNav) {
         NavItem.Home -> stringResource(R.string.toolbox_title)
         NavItem.LoopTool -> stringResource(R.string.crash_loop_title)
+        NavItem.AudioEffect -> "全局音效"
         NavItem.ProcessManager -> "进程管理"
         NavItem.AppManager -> "应用管理"
         NavItem.Settings -> stringResource(R.string.settings_title)
@@ -133,6 +135,9 @@ private fun MainApp(
                     )
                     NavItem.LoopTool -> CrashLoopScreen(
                         settingsManager = settingsManager,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    NavItem.AudioEffect -> AudioEffectScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                     NavItem.ProcessManager -> ProcessManagerScreen(
