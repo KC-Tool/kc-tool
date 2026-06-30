@@ -18,6 +18,8 @@ enum class NavItem(val title: String, val icon: ImageVector) {
     AudioEffect("全局音效", Icons.Default.GraphicEq),
     ProcessManager("进程管理", Icons.Default.Memory),
     AppManager("应用管理", Icons.Default.Apps),
+    AppStoreOpt("应用商店优化", Icons.Default.ShoppingCart),
+    GameOpt("游戏优化", Icons.Default.SportsEsports),
     Settings("设置", Icons.Default.Settings)
 }
 

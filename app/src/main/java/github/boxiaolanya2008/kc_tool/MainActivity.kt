@@ -28,6 +28,8 @@ import github.boxiaolanya2008.kc_tool.ui.screens.AudioEffectScreen
 import github.boxiaolanya2008.kc_tool.ui.screens.ProcessManagerScreen
 import github.boxiaolanya2008.kc_tool.ui.screens.SettingsScreen
 import github.boxiaolanya2008.kc_tool.ui.screens.AppManagerScreen
+import github.boxiaolanya2008.kc_tool.ui.screens.AppStoreOptScreen
+import github.boxiaolanya2008.kc_tool.ui.screens.GameOptScreen
 import github.boxiaolanya2008.kc_tool.ui.screens.WhitelistScreen
 import github.boxiaolanya2008.kc_tool.ui.theme.KctoolTheme
 import kotlinx.coroutines.launch
@@ -99,6 +101,8 @@ private fun MainApp(
         NavItem.AudioEffect -> "全局音效"
         NavItem.ProcessManager -> "进程管理"
         NavItem.AppManager -> "应用管理"
+        NavItem.AppStoreOpt -> "应用商店优化"
+        NavItem.GameOpt -> "游戏优化"
         NavItem.Settings -> stringResource(R.string.settings_title)
     }
 
@@ -144,6 +148,12 @@ private fun MainApp(
                         modifier = Modifier.fillMaxSize()
                     )
                     NavItem.AppManager -> AppManagerScreen(
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    NavItem.AppStoreOpt -> AppStoreOptScreen(
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    NavItem.GameOpt -> GameOptScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                     NavItem.Settings -> SettingsScreen(
